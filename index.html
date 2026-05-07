@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GradeFlow | Seamless School Result Portals</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        heading: ['Poppins', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            dark: '#0f172a',
+                            light: '#38bdf8',
+                            primary: '#2563eb',
+                            accent: '#8b5cf6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+        
+        /* 3D Canvas Background */
+        #hero-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        /* Glassmorphism utility */
+        .glass {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+        
+        .glass-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(56, 189, 248, 0.5);
+        }
+
+        /* Gradient Text */
+        .text-gradient {
+            background: linear-gradient(to right, #38bdf8, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569; 
+        }
+    </style>
+</head>
+<body class="antialiased font-sans">
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 glass transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex items-center gap-2">
+                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-light to-brand-accent flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-brand-primary/30">
+                        GF
+                    </div>
+                    <span class="font-heading font-bold text-2xl tracking-tight text-white">Grade<span class="text-brand-light">Flow</span></span>
+                </div>
+                <div class="hidden md:block">
+                    <button onclick="openLoginModal()" class="bg-brand-primary hover:bg-blue-500 text-white px-6 py-2 rounded-full font-medium transition-all shadow-lg shadow-brand-primary/30 transform hover:scale-105">
+                        Portal Login
+                    </button>
+                </div>
+                <!-- Mobile menu button -->
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-btn" class="text-gray-300 hover:text-white focus:outline-none">
+                        <i class="fas fa-bars text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden glass border-t border-gray-800 absolute w-full">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="#home" class="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-800">Home</a>
+                <a href="#features" class="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-800">Features</a>
+                <a href="#blog" class="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-800">Blog</a>
+                <a href="#pricing" class="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-800">Pricing</a>
+                <button onclick="openLoginModal()" class="w-full mt-4 bg-brand-primary text-white px-6 py-2 rounded-full font-medium">Portal Login</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section with 3D Background -->
+    <div id="home" class="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+        <!-- 3D Canvas Container -->
+        <canvas id="hero-canvas"></canvas>
+        
+        <!-- Hero Content -->
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center pointer-events-none">
+            <div class="glass-card inline-block px-4 py-1.5 rounded-full mb-6 border border-brand-light/30 text-sm font-medium text-brand-light pointer-events-auto">
+                <i class="fas fa-rocket mr-2"></i> GradeFlow v2.0 is Live
+            </div>
+            <h1 class="font-heading text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-tight">
+                Modernize Your School's <br/>
+                <span class="text-gradient">Result Management</span>
+            </h1>
+            <p class="mt-4 text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto font-light mb-10">
+                GradeFlow is a fully managed, securely hosted portal allowing your students and parents to view academic results seamlessly online. Zero coding required.
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4 pointer-events-auto">
+                <button class="bg-white text-brand-dark hover:bg-gray-100 px-8 py-4 rounded-full font-semibold text-lg transition-all transform hover:scale-105 flex items-center justify-center">
+                    Start Your Free Trial <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+                <button class="glass hover:bg-white/10 px-8 py-4 rounded-full font-semibold text-lg transition-all border border-gray-600 flex items-center justify-center text-white">
+                    <i class="fas fa-play-circle mr-2"></i> Watch Demo
+                </button>
+            </div>
+            
+            <div class="mt-16 flex justify-center gap-8 text-gray-400 text-sm font-medium">
+                <div class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i> Bank-Grade Security</div>
+                <div class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i> Dedicated Support</div>
+                <div class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i> 99.9% Uptime</div>
+            </div>
+        </div>
+        
+        <!-- Bottom gradient fade -->
+        <div class="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-brand-dark to-transparent z-0"></div>
+    </div>
+
+    <!-- Features Section -->
+    <section id="features" class="py-20 bg-brand-dark relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-brand-light font-semibold tracking-wide uppercase text-sm mb-2">Why Choose GradeFlow</h2>
+                <h3 class="font-heading text-3xl md:text-5xl font-bold">Everything your school needs</h3>
+                <p class="mt-4 text-gray-400 max-w-2xl mx-auto">As a dedicated solo-founder, I ensure you get enterprise-level hosting without the enterprise-level bloat. Simple, fast, and secure.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Feature 1 -->
+                <div class="glass-card p-8 rounded-2xl">
+                    <div class="w-14 h-14 bg-blue-500/20 rounded-xl flex items-center justify-center mb-6 text-blue-400 text-2xl">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <h4 class="text-xl font-bold mb-3 text-white">Easy Excel Uploads</h4>
+                    <p class="text-gray-400 leading-relaxed">Teachers simply upload an Excel or CSV file. The portal automatically parses and routes the grades to the right student accounts instantly.</p>
+                </div>
+                <!-- Feature 2 -->
+                <div class="glass-card p-8 rounded-2xl">
+                    <div class="w-14 h-14 bg-purple-500/20 rounded-xl flex items-center justify-center mb-6 text-purple-400 text-2xl">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h4 class="text-xl font-bold mb-3 text-white">Mobile Optimized</h4>
+                    <p class="text-gray-400 leading-relaxed">Students and parents can check results smoothly on any device. The portal adapts beautifully to smartphones and tablets.</p>
+                </div>
+                <!-- Feature 3 -->
+                <div class="glass-card p-8 rounded-2xl">
+                    <div class="w-14 h-14 bg-green-500/20 rounded-xl flex items-center justify-center mb-6 text-green-400 text-2xl">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <h4 class="text-xl font-bold mb-3 text-white">Private & Secure</h4>
+                    <p class="text-gray-400 leading-relaxed">Each student gets a secure, unique PIN/Password login. Results are encrypted and isolated so privacy is completely guaranteed.</p>
+                </div>
+                <!-- Feature 4 -->
+                <div class="glass-card p-8 rounded-2xl">
+                    <div class="w-14 h-14 bg-yellow-500/20 rounded-xl flex items-center justify-center mb-6 text-yellow-400 text-2xl">
+                        <i class="fas fa-paint-brush"></i>
+                    </div>
+                    <h4 class="text-xl font-bold mb-3 text-white">Custom Branding</h4>
+                    <p class="text-gray-400 leading-relaxed">The portal features your school's logo, colors, and crest. It feels exactly like an extension of your own school's website.</p>
+                </div>
+                <!-- Feature 5 -->
+                <div class="glass-card p-8 rounded-2xl">
+                    <div class="w-14 h-14 bg-pink-500/20 rounded-xl flex items-center justify-center mb-6 text-pink-400 text-2xl">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <h4 class="text-xl font-bold mb-3 text-white">Analytics Dashboard</h4>
+                    <p class="text-gray-400 leading-relaxed">Administrators can view class performance trends, pass rates, and login statistics from a beautiful central dashboard.</p>
+                </div>
+                <!-- Feature 6 -->
+                <div class="glass-card p-8 rounded-2xl">
+                    <div class="w-14 h-14 bg-teal-500/20 rounded-xl flex items-center justify-center mb-6 text-teal-400 text-2xl">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <h4 class="text-xl font-bold mb-3 text-white">Direct Support</h4>
+                    <p class="text-gray-400 leading-relaxed">You deal directly with the founder. No frustrating support queues. I provide fast, personal onboarding and troubleshooting.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Blog / Updates Section -->
+    <section id="blog" class="py-20 relative z-10">
+        <div class="absolute inset-0 bg-gradient-to-b from-brand-dark to-[#0b1120] z-0"></div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-12">
+                <div>
+                    <h2 class="text-brand-light font-semibold tracking-wide uppercase text-sm mb-2">GradeFlow Blog</h2>
+                    <h3 class="font-heading text-3xl md:text-5xl font-bold">Latest Insights & Updates</h3>
+                </div>
+                <a href="#" class="text-brand-light hover:text-white transition-colors mt-4 md:mt-0 font-medium">View all posts <i class="fas fa-arrow-right ml-1"></i></a>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Blog Post 1 -->
+                <div class="glass-card rounded-2xl overflow-hidden group">
+                    <div class="h-48 bg-gray-800 relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-tr from-blue-600/40 to-purple-600/40 group-hover:scale-110 transition-transform duration-500"></div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <i class="fas fa-laptop-code text-5xl text-white/50"></i>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="text-xs text-brand-light font-bold mb-2 uppercase">Product Update</div>
+                        <h4 class="text-xl font-bold mb-2 text-white group-hover:text-brand-light transition-colors">Introducing GradeFlow Analytics 2.0</h4>
+                        <p class="text-gray-400 text-sm mb-4">We've completely revamped the admin dashboard to give principals a clearer bird's-eye view of student performance over the semester.</p>
+                        <div class="flex items-center text-sm text-gray-500">
+                            <i class="far fa-calendar mr-2"></i> April 12, 2026
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Blog Post 2 -->
+                <div class="glass-card rounded-2xl overflow-hidden group">
+                    <div class="h-48 bg-gray-800 relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-tr from-teal-600/40 to-green-600/40 group-hover:scale-110 transition-transform duration-500"></div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <i class="fas fa-shield-alt text-5xl text-white/50"></i>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="text-xs text-brand-light font-bold mb-2 uppercase">Education Tips</div>
+                        <h4 class="text-xl font-bold mb-2 text-white group-hover:text-brand-light transition-colors">Why Paper Results are a Security Risk</h4>
+                        <p class="text-gray-400 text-sm mb-4">A deep dive into the privacy issues surrounding traditional paper report cards and why moving to encrypted digital portals is essential.</p>
+                        <div class="flex items-center text-sm text-gray-500">
+                            <i class="far fa-calendar mr-2"></i> March 28, 2026
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Blog Post 3 -->
+                <div class="glass-card rounded-2xl overflow-hidden group">
+                    <div class="h-48 bg-gray-800 relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-tr from-orange-600/40 to-red-600/40 group-hover:scale-110 transition-transform duration-500"></div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <i class="fas fa-users text-5xl text-white/50"></i>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="text-xs text-brand-light font-bold mb-2 uppercase">Case Study</div>
+                        <h4 class="text-xl font-bold mb-2 text-white group-hover:text-brand-light transition-colors">How Lincoln High Saved 40 Hours a Month</h4>
+                        <p class="text-gray-400 text-sm mb-4">See how integrating GradeFlow allowed Lincoln High School's administrative staff to automate their end-of-term reporting completely.</p>
+                        <div class="flex items-center text-sm text-gray-500">
+                            <i class="far fa-calendar mr-2"></i> March 15, 2026
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="py-20 bg-[#0b1120] relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-brand-light font-semibold tracking-wide uppercase text-sm mb-2">Simple Pricing</h2>
+                <h3 class="font-heading text-3xl md:text-5xl font-bold">Hosted Portal Subscriptions</h3>
+                <p class="mt-4 text-gray-400 max-w-2xl mx-auto">No hidden fees. Flat rates based on your school's size. Cancel anytime.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                <!-- Tier 1 -->
+                <div class="glass-card rounded-3xl p-8 border-t-4 border-t-gray-500">
+                    <h4 class="text-2xl font-bold text-white mb-2">Primary School</h4>
+                    <p class="text-gray-400 text-sm mb-6">Perfect for small to medium primary schools.</p>
+                    <div class="mb-6">
+                        <span class="text-4xl font-bold text-white">$49</span><span class="text-gray-400">/mo</span>
+                    </div>
+                    <ul class="space-y-4 mb-8 text-gray-300 text-sm">
+                        <li class="flex items-center"><i class="fas fa-check text-green-400 mr-3"></i> Up to 500 Students</li>
+                        <li class="flex items-center"><i class="fas fa-check text-green-400 mr-3"></i> Standard Portal Branding</li>
+                        <li class="flex items-center"><i class="fas fa-check text-green-400 mr-3"></i> Email Support</li>
+                        <li class="flex items-center"><i class="fas fa-check text-green-400 mr-3"></i> Basic Analytics</li>
+                    </ul>
+                    <button class="w-full glass hover:bg-gray-700 text-white font-semibold py-3 rounded-xl transition-colors">Choose Plan</button>
+                </div>
+
+                <!-- Tier 2 (Highlighted) -->
+                <div class="glass-card rounded-3xl p-8 border-t-4 border-t-brand-primary transform md:-translate-y-4 shadow-2xl shadow-brand-primary/20 relative">
+                    <div class="absolute top-0 right-0 bg-brand-primary text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-2xl uppercase">Most Popular</div>
+                    <h4 class="text-2xl font-bold text-white mb-2">High School</h4>
+                    <p class="text-gray-400 text-sm mb-6">Ideal for large secondary schools with complex needs.</p>
+                    <div class="mb-6">
+                        <span class="text-4xl font-bold text-brand-light">$99</span><span class="text-gray-400">/mo</span>
+                    </div>
+                    <ul class="space-y-4 mb-8 text-gray-300 text-sm">
+                        <li class="flex items-center"><i class="fas fa-check text-brand-light mr-3"></i> Up to 2,000 Students</li>
+                        <li class="flex items-center"><i class="fas fa-check text-brand-light mr-3"></i> Full Custom Domain & Branding</li>
+                        <li class="flex items-center"><i class="fas fa-check text-brand-light mr-3"></i> Priority WhatsApp Support</li>
+                        <li class="flex items-center"><i class="fas fa-check text-brand-light mr-3"></i> Advanced Analytics Dashboard</li>
+                        <li class="flex items-center"><i class="fas fa-check text-brand-light mr-3"></i> SMS Notification Add-on</li>
+                    </ul>
+                    <button class="w-full bg-brand-primary hover:bg-blue-600 text-white font-semibold py-3 rounded-xl transition-colors shadow-lg shadow-brand-primary/30">Choose Plan</button>
+                </div>
+
+                <!-- Tier 3 -->
+                <div class="glass-card rounded-3xl p-8 border-t-4 border-t-brand-accent">
+                    <h4 class="text-2xl font-bold text-white mb-2">District / Group</h4>
+                    <p class="text-gray-400 text-sm mb-6">For school groups managing multiple campuses.</p>
+                    <div class="mb-6">
+                        <span class="text-4xl font-bold text-white">$199</span><span class="text-gray-400">/mo</span>
+                    </div>
+                    <ul class="space-y-4 mb-8 text-gray-300 text-sm">
+                        <li class="flex items-center"><i class="fas fa-check text-brand-accent mr-3"></i> Unlimited Students</li>
+                        <li class="flex items-center"><i class="fas fa-check text-brand-accent mr-3"></i> Multiple Campus Dashboards</li>
+                        <li class="flex items-center"><i class="fas fa-check text-brand-accent mr-3"></i> 24/7 Direct Founder Support</li>
+                        <li class="flex items-center"><i class="fas fa-check text-brand-accent mr-3"></i> Custom Feature Requests</li>
+                    </ul>
+                    <button class="w-full glass hover:bg-gray-700 text-white font-semibold py-3 rounded-xl transition-colors">Contact Sales</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 border-t border-gray-800 py-12 relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                <div class="col-span-1 md:col-span-2">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-8 h-8 rounded-md bg-gradient-to-br from-brand-light to-brand-accent flex items-center justify-center text-white font-bold text-sm">
+                            GF
+                        </div>
+                        <span class="font-heading font-bold text-xl tracking-tight text-white">GradeFlow</span>
+                    </div>
+                    <p class="text-gray-400 text-sm max-w-sm mb-6">
+                        GradeFlow is a dedicated one-person enterprise committed to modernizing how schools handle, distribute, and analyze student results securely online.
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-github"></i></a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-white font-semibold mb-4">Company</h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-brand-light transition-colors">About Me</a></li>
+                        <li><a href="#blog" class="hover:text-brand-light transition-colors">Blog</a></li>
+                        <li><a href="#features" class="hover:text-brand-light transition-colors">Features</a></li>
+                        <li><a href="#pricing" class="hover:text-brand-light transition-colors">Pricing</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-white font-semibold mb-4">Legal & Support</h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-brand-light transition-colors">Privacy Policy</a></li>
+                        <li><a href="#" class="hover:text-brand-light transition-colors">Terms of Service</a></li>
+                        <li><a href="#" class="hover:text-brand-light transition-colors">Contact Support</a></li>
+                        <li><a href="#" class="hover:text-brand-light transition-colors">System Status</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-gray-500 text-sm">© 2026 GradeFlow. All rights reserved.</p>
+                <p class="text-gray-500 text-sm mt-2 md:mt-0 flex items-center">
+                    Built with <i class="fas fa-heart text-red-500 mx-1"></i> by a solo founder.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Portal Login Modal -->
+    <div id="login-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-md" onclick="closeLoginModal()"></div>
+        
+        <!-- Modal Content -->
+        <div class="glass-card relative z-10 w-full max-w-md p-8 rounded-3xl border border-brand-light/20 shadow-2xl shadow-brand-primary/20 transform scale-95 transition-transform duration-300" id="login-modal-content">
+            <button onclick="closeLoginModal()" class="absolute top-5 right-5 text-gray-400 hover:text-white transition-colors">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            
+            <div class="text-center mb-8">
+                <div class="w-12 h-12 mx-auto rounded-xl bg-gradient-to-br from-brand-light to-brand-accent flex items-center justify-center text-white text-xl shadow-lg mb-4">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-white mb-2" id="login-title">Center Access</h3>
+                <p class="text-gray-400 text-sm" id="login-subtitle">Enter your school's center details</p>
+            </div>
+
+            <!-- Error Message Container -->
+            <p id="login-error" class="hidden text-red-400 text-sm text-center mb-4"></p>
+
+            <!-- Step 1: Center Details -->
+            <div id="login-step-1" class="space-y-4">
+                <div>
+                    <label class="block text-gray-400 text-xs uppercase tracking-wider mb-2 font-semibold">Center Name</label>
+                    <input type="text" id="center-name" placeholder="e.g. Lincoln High School" class="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-light focus:ring-1 focus:ring-brand-light transition-colors" />
+                </div>
+                <div>
+                    <label class="block text-gray-400 text-xs uppercase tracking-wider mb-2 font-semibold">Center Number</label>
+                    <input type="text" id="center-number" placeholder="e.g. CTR-8492" class="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-light focus:ring-1 focus:ring-brand-light transition-colors" />
+                </div>
+                <button onclick="goToLoginStep(2)" class="w-full mt-4 bg-brand-primary hover:bg-blue-600 text-white py-3 rounded-xl font-semibold transition-colors shadow-lg shadow-brand-primary/30 flex justify-center items-center">
+                    Continue <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+
+            <!-- Step 2: Role Selection -->
+            <div id="login-step-2" class="hidden space-y-4">
+                <button onclick="selectLoginRole('admin')" class="w-full text-left bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700 hover:border-brand-light rounded-2xl p-4 transition-all group flex items-start gap-4">
+                    <div class="w-10 h-10 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 mt-1">
+                        <i class="fas fa-user-shield text-lg"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-white font-bold text-lg group-hover:text-brand-light transition-colors">Admin Access</h4>
+                        <p class="text-gray-400 text-sm mt-1">Student management, account entry, and editing student profiles.</p>
+                    </div>
+                </button>
+                
+                <button onclick="selectLoginRole('teacher')" class="w-full text-left bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700 hover:border-brand-accent rounded-2xl p-4 transition-all group flex items-start gap-4">
+                    <div class="w-10 h-10 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center shrink-0 mt-1">
+                        <i class="fas fa-chalkboard-teacher text-lg"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-white font-bold text-lg group-hover:text-brand-accent transition-colors">Teacher Access</h4>
+                        <p class="text-gray-400 text-sm mt-1">Entry of academic results and grades for assigned students.</p>
+                    </div>
+                </button>
+                
+                <button onclick="goToLoginStep(1)" class="w-full text-gray-400 hover:text-white py-2 text-sm font-medium mt-2">
+                    <i class="fas fa-arrow-left mr-1"></i> Back to Center Details
+                </button>
+            </div>
+
+            <!-- Step 3: Credentials -->
+            <div id="login-step-3" class="hidden space-y-4">
+                <div class="bg-gray-900/40 rounded-lg p-3 mb-4 flex items-center justify-center text-sm border border-gray-700/50" id="selected-role-badge">
+                    <!-- Badge content injected via JS -->
+                </div>
+
+                <div>
+                    <label class="block text-gray-400 text-xs uppercase tracking-wider mb-2 font-semibold">Full Name</label>
+                    <input type="text" id="full-name" placeholder="John Doe" class="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-light focus:ring-1 focus:ring-brand-light transition-colors" />
+                </div>
+                <div>
+                    <label class="block text-gray-400 text-xs uppercase tracking-wider mb-2 font-semibold">Password</label>
+                    <input type="password" id="password" placeholder="••••••••" class="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-light focus:ring-1 focus:ring-brand-light transition-colors" />
+                </div>
+                <button onclick="processLogin()" class="w-full mt-4 bg-gradient-to-r from-brand-light to-brand-accent hover:from-blue-400 hover:to-purple-500 text-white py-3 rounded-xl font-semibold transition-colors shadow-lg shadow-brand-accent/30">
+                    Secure Login
+                </button>
+                <button onclick="goToLoginStep(2)" class="w-full text-gray-400 hover:text-white py-2 text-sm font-medium mt-2">
+                    <i class="fas fa-arrow-left mr-1"></i> Change Role
+                </button>
+            </div>
+
+            <!-- Step 4: Success State -->
+            <div id="login-success" class="hidden text-center py-6">
+                <div class="w-20 h-20 mx-auto bg-green-500/20 rounded-full flex items-center justify-center mb-6">
+                    <i class="fas fa-check text-4xl text-green-400"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-white mb-2">Login Successful</h3>
+                <p class="text-gray-400" id="redirect-message">Loading your dashboard...</p>
+                
+                <div class="mt-8 flex justify-center">
+                    <div class="w-6 h-6 border-2 border-brand-light border-t-transparent rounded-full animate-spin"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- Application Logic -->
+    <script>
+        // --- Modal Login Logic ---
+        let currentLoginRole = '';
+        const modal = document.getElementById('login-modal');
+        const modalContent = document.getElementById('login-modal-content');
+
+        function openLoginModal() {
+            modal.classList.remove('hidden');
+            // Slight delay for animation to trigger
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modalContent.classList.remove('scale-95');
+            }, 10);
+            
+            // Reset fields and start at step 1
+            document.getElementById('center-name').value = '';
+            document.getElementById('center-number').value = '';
+            document.getElementById('full-name').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('login-error').classList.add('hidden');
+            
+            goToLoginStep(1);
+        }
+
+        function closeLoginModal() {
+            modal.classList.add('opacity-0');
+            modalContent.classList.add('scale-95');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300); // Wait for transition to finish
+        }
+
+        function goToLoginStep(step) {
+            // Hide all steps
+            document.getElementById('login-step-1').classList.add('hidden');
+            document.getElementById('login-step-2').classList.add('hidden');
+            document.getElementById('login-step-3').classList.add('hidden');
+            document.getElementById('login-success').classList.add('hidden');
+            
+            const title = document.getElementById('login-title');
+            const subtitle = document.getElementById('login-subtitle');
+            const errorMsg = document.getElementById('login-error');
+            errorMsg.classList.add('hidden');
+
+            if (step === 1) {
+                document.getElementById('login-step-1').classList.remove('hidden');
+                title.innerText = "Center Access";
+                subtitle.innerText = "Enter your school's center details";
+            } 
+            else if (step === 2) {
+                // Basic Validation for Step 1
+                const cName = document.getElementById('center-name').value.trim();
+                const cNum = document.getElementById('center-number').value.trim();
+                
+                if (!cName || !cNum) {
+                    errorMsg.innerText = "Please provide both Center Name and Number.";
+                    errorMsg.classList.remove('hidden');
+                    document.getElementById('login-step-1').classList.remove('hidden');
+                    return;
+                }
+
+                document.getElementById('login-step-2').classList.remove('hidden');
+                title.innerText = "Select Role";
+                subtitle.innerText = `Accessing as part of ${cName}`;
+            } 
+            else if (step === 3) {
+                document.getElementById('login-step-3').classList.remove('hidden');
+                
+                // Update UI based on selected role
+                if (currentLoginRole === 'admin') {
+                    title.innerText = "Admin Portal";
+                    subtitle.innerText = "Student Management Access";
+                    document.getElementById('selected-role-badge').innerHTML = '<span class="text-blue-400"><i class="fas fa-user-shield mr-2"></i> Role: Administrator</span>';
+                } else {
+                    title.innerText = "Teacher Portal";
+                    subtitle.innerText = "Result Entry Access";
+                    document.getElementById('selected-role-badge').innerHTML = '<span class="text-purple-400"><i class="fas fa-chalkboard-teacher mr-2"></i> Role: Subject Teacher</span>';
+                }
+            }
+        }
+
+        function selectLoginRole(role) {
+            currentLoginRole = role;
+            goToLoginStep(3);
+        }
+
+        function processLogin() {
+            const name = document.getElementById('full-name').value.trim();
+            const pass = document.getElementById('password').value;
+            const errorMsg = document.getElementById('login-error');
+
+            if (!name || !pass) {
+                errorMsg.innerText = "Please enter your Full Name and Password.";
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+
+            // Hide step 3, show success animation
+            document.getElementById('login-step-3').classList.add('hidden');
+            document.getElementById('login-title').classList.add('hidden');
+            document.getElementById('login-subtitle').classList.add('hidden');
+            errorMsg.classList.add('hidden');
+            
+            const successContainer = document.getElementById('login-success');
+            successContainer.classList.remove('hidden');
+
+            const redirectMsg = document.getElementById('redirect-message');
+            redirectMsg.innerText = `Loading ${currentLoginRole === 'admin' ? 'Student Management' : 'Result Entry'} Dashboard for ${name}...`;
+
+            // Mock redirect delay
+            setTimeout(() => {
+                closeLoginModal();
+                // Reset UI back to normal after hiding
+                setTimeout(() => {
+                    document.getElementById('login-title').classList.remove('hidden');
+                    document.getElementById('login-subtitle').classList.remove('hidden');
+                }, 300);
+            }, 3000);
+        }
+
+        // --- Mobile Menu Toggle ---
+        const btn = document.getElementById('mobile-menu-btn');
+        const menu = document.getElementById('mobile-menu');
+
+        btn.addEventListener('click', () => {
+            menu.classList.toggle('hidden');
+        });
+
+        // --- Navbar Scroll Effect ---
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 20) {
+                navbar.classList.add('shadow-lg', 'bg-brand-dark/90');
+                navbar.classList.remove('bg-transparent');
+            } else {
+                navbar.classList.remove('shadow-lg', 'bg-brand-dark/90');
+                navbar.classList.add('bg-transparent');
+            }
+        });
+
+        // --- Three.js 3D Background Setup ---
+        window.onload = function() {
+            init3D();
+        };
+
+        function init3D() {
+            const canvas = document.getElementById('hero-canvas');
+            
+            // Scene setup
+            const scene = new THREE.Scene();
+            // Fog to fade objects in the distance
+            scene.fog = new THREE.FogExp2(0x0f172a, 0.0015);
+
+            // Camera setup
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 30;
+
+            // Renderer setup
+            const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            // Objects: Create a flowing network of "Data Nodes" (representing grades/data)
+            
+            // 1. Central Abstract Object (TorusKnot)
+            const geometry = new THREE.TorusKnotGeometry(10, 3, 100, 16);
+            
+            // Create a custom material that looks glassy/techy
+            const material = new THREE.MeshBasicMaterial({ 
+                color: 0x38bdf8, 
+                wireframe: true,
+                transparent: true,
+                opacity: 0.15
+            });
+            const torusKnot = new THREE.Mesh(geometry, material);
+            scene.add(torusKnot);
+
+            // 2. Particle "Flow" system
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particlesCount = 1500;
+            
+            const posArray = new Float32Array(particlesCount * 3);
+            const velocities = [];
+
+            for(let i = 0; i < particlesCount * 3; i+=3) {
+                // Spread particles widely
+                posArray[i] = (Math.random() - 0.5) * 100; // x
+                posArray[i+1] = (Math.random() - 0.5) * 100; // y
+                posArray[i+2] = (Math.random() - 0.5) * 100; // z
+                
+                velocities.push({
+                    x: (Math.random() - 0.5) * 0.02,
+                    y: (Math.random() - 0.5) * 0.02,
+                    z: (Math.random() - 0.5) * 0.02
+                });
+            }
+
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            
+            // Make particles look like glowing data dots
+            const particlesMaterial = new THREE.PointsMaterial({
+                size: 0.2,
+                color: 0x8b5cf6,
+                transparent: true,
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending
+            });
+            
+            const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particlesMesh);
+
+            // Mouse interaction setup
+            let mouseX = 0;
+            let mouseY = 0;
+            let targetX = 0;
+            let targetY = 0;
+
+            const windowHalfX = window.innerWidth / 2;
+            const windowHalfY = window.innerHeight / 2;
+
+            document.addEventListener('mousemove', (event) => {
+                mouseX = (event.clientX - windowHalfX);
+                mouseY = (event.clientY - windowHalfY);
+            });
+            
+            // Handle touch for mobile
+            document.addEventListener('touchmove', (event) => {
+                if(event.touches.length > 0) {
+                    mouseX = (event.touches[0].clientX - windowHalfX);
+                    mouseY = (event.touches[0].clientY - windowHalfY);
+                }
+            }, {passive: true});
+
+            // Animation Loop
+            const clock = new THREE.Clock();
+
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                const elapsedTime = clock.getElapsedTime();
+
+                // Smoothly interpolate target values for fluid mouse reaction
+                targetX = mouseX * 0.001;
+                targetY = mouseY * 0.001;
+
+                // Rotate the main shape
+                torusKnot.rotation.y += 0.002;
+                torusKnot.rotation.x += 0.001;
+                
+                // Add subtle floating motion
+                torusKnot.position.y = Math.sin(elapsedTime * 0.5) * 2;
+
+                // Rotate particle mesh based on time and mouse
+                particlesMesh.rotation.y += 0.001;
+                particlesMesh.rotation.x += 0.0005;
+                
+                // Parallax effect with mouse
+                torusKnot.rotation.y += 0.05 * (targetX - torusKnot.rotation.y);
+                torusKnot.rotation.x += 0.05 * (targetY - torusKnot.rotation.x);
+                
+                camera.position.x += (mouseX * 0.01 - camera.position.x) * 0.05;
+                camera.position.y += (-mouseY * 0.01 - camera.position.y) * 0.05;
+                camera.lookAt(scene.position);
+
+                // Animate individual particles for a "flow" effect
+                const positions = particlesMesh.geometry.attributes.position.array;
+                for(let i=0; i<particlesCount; i++) {
+                    const i3 = i*3;
+                    positions[i3+1] += Math.sin(elapsedTime + positions[i3]) * 0.01; // subtle wave on Y axis
+                }
+                particlesMesh.geometry.attributes.position.needsUpdate = true;
+
+                renderer.render(scene, camera);
+            }
+
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+            // Start animation
+            animate();
+        }
+    </script>
+</body>
+</html>
