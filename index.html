@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GradeFlow | Seamless School Result Portals</title>
+    <title>GradeFlow | School Systems</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome -->
@@ -11,6 +11,11 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
     
+    <!-- EmailJS Library -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <!-- html2pdf Library for PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <script>
         tailwind.config = {
             theme: {
@@ -24,7 +29,9 @@
                             dark: '#0f172a',
                             light: '#38bdf8',
                             primary: '#2563eb',
-                            accent: '#8b5cf6'
+                            accent: '#8b5cf6',
+                            owner: '#f59e0b', /* Gold for Super Admin */
+                            surface: '#1e293b'
                         }
                     }
                 }
@@ -33,773 +40,996 @@
     </script>
     
     <style>
-        body {
-            background-color: #0f172a;
-            color: #f8fafc;
-            overflow-x: hidden;
+        :root {
+            --theme-color: #2563eb;
+            --theme-color-rgb: 37, 99, 235;
         }
-        
-        /* 3D Canvas Background */
-        #hero-canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-        }
-
-        /* Glassmorphism utility */
-        .glass {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .glass-card {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: transform 0.3s ease, border-color 0.3s ease;
-        }
-        
-        .glass-card:hover {
-            transform: translateY(-5px);
-            border-color: rgba(56, 189, 248, 0.5);
-        }
-
-        /* Gradient Text */
-        .text-gradient {
-            background: linear-gradient(to right, #38bdf8, #8b5cf6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #0f172a; 
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #334155; 
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #475569; 
-        }
+        body { background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
+        #hero-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
+        .glass { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); transition: transform 0.3s ease, border-color 0.3s ease; }
+        .glass-card:hover { transform: translateY(-5px); border-color: rgba(56, 189, 248, 0.5); }
+        .text-gradient { background: linear-gradient(to right, #38bdf8, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        .dashboard-active #landing-view { display: none; }
+        .dashboard-active #hero-canvas { opacity: 0.1; }
+        .theme-bg { background-color: var(--theme-color) !important; }
+        .theme-text { color: var(--theme-color) !important; }
+        .theme-border { border-color: var(--theme-color) !important; }
+        .theme-bg-light { background-color: rgba(var(--theme-color-rgb), 0.1) !important; }
+        .theme-ring:focus { --tw-ring-color: var(--theme-color); box-shadow: 0 0 0 calc(2px + 0px) var(--theme-color); border-color: var(--theme-color); }
     </style>
 </head>
 <body class="antialiased font-sans">
 
-    <!-- Navigation -->
-    <nav class="fixed w-full z-50 glass transition-all duration-300" id="navbar">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-20">
-                <div class="flex items-center gap-2">
-                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-light to-brand-accent flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-brand-primary/30">
-                        GF
-                    </div>
-                    <span class="font-heading font-bold text-2xl tracking-tight text-white">Grade<span class="text-brand-light">Flow</span></span>
-                </div>
-                <div class="hidden md:block">
-                    <button onclick="openLoginModal()" class="bg-brand-primary hover:bg-blue-500 text-white px-6 py-2 rounded-full font-medium transition-all shadow-lg shadow-brand-primary/30 transform hover:scale-105">
-                        Portal Login
-                    </button>
-                </div>
-                <!-- Mobile menu button -->
-                <div class="md:hidden flex items-center">
-                    <button id="mobile-menu-btn" class="text-gray-300 hover:text-white focus:outline-none">
-                        <i class="fas fa-bars text-2xl"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-        <!-- Mobile Menu -->
-        <div id="mobile-menu" class="hidden md:hidden glass border-t border-gray-800 absolute w-full">
-            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                <a href="#home" class="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-800">Home</a>
-                <a href="#features" class="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-800">Features</a>
-                <a href="#blog" class="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-800">Blog</a>
-                <a href="#pricing" class="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-800">Pricing</a>
-                <button onclick="openLoginModal()" class="w-full mt-4 bg-brand-primary text-white px-6 py-2 rounded-full font-medium">Portal Login</button>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Hero Section with 3D Background -->
-    <div id="home" class="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
-        <!-- 3D Canvas Container -->
+    <!-- =========================================================================================
+         APP 1: GRADEFLOW WEBSITE (LANDING & DASHBOARDS)
+         ========================================================================================= -->
+    <div id="gradeflow-app">
         <canvas id="hero-canvas"></canvas>
-        
-        <!-- Hero Content -->
-        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center pointer-events-none">
-            <div class="glass-card inline-block px-4 py-1.5 rounded-full mb-6 border border-brand-light/30 text-sm font-medium text-brand-light pointer-events-auto">
-                <i class="fas fa-rocket mr-2"></i> GradeFlow v2.0 is Live
-            </div>
-            <h1 class="font-heading text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-tight">
-                Modernize Your School's <br/>
-                <span class="text-gradient">Result Management</span>
-            </h1>
-            <p class="mt-4 text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto font-light mb-10">
-                GradeFlow is a fully managed, securely hosted portal allowing your students and parents to view academic results seamlessly online. Zero coding required.
-            </p>
-            <div class="flex flex-col sm:flex-row justify-center gap-4 pointer-events-auto">
-                <button class="bg-white text-brand-dark hover:bg-gray-100 px-8 py-4 rounded-full font-semibold text-lg transition-all transform hover:scale-105 flex items-center justify-center">
-                    Start Your Free Trial <i class="fas fa-arrow-right ml-2"></i>
-                </button>
-                <button class="glass hover:bg-white/10 px-8 py-4 rounded-full font-semibold text-lg transition-all border border-gray-600 flex items-center justify-center text-white">
-                    <i class="fas fa-play-circle mr-2"></i> Watch Demo
-                </button>
-            </div>
-            
-            <div class="mt-16 flex justify-center gap-8 text-gray-400 text-sm font-medium">
-                <div class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i> Bank-Grade Security</div>
-                <div class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i> Dedicated Support</div>
-                <div class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i> 99.9% Uptime</div>
-            </div>
-        </div>
-        
-        <!-- Bottom gradient fade -->
-        <div class="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-brand-dark to-transparent z-0"></div>
-    </div>
 
-    <!-- Features Section -->
-    <section id="features" class="py-20 bg-brand-dark relative z-10">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-brand-light font-semibold tracking-wide uppercase text-sm mb-2">Why Choose GradeFlow</h2>
-                <h3 class="font-heading text-3xl md:text-5xl font-bold">Everything your school needs</h3>
-                <p class="mt-4 text-gray-400 max-w-2xl mx-auto">As a dedicated solo-founder, I ensure you get enterprise-level hosting without the enterprise-level bloat. Simple, fast, and secure.</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Feature 1 -->
-                <div class="glass-card p-8 rounded-2xl">
-                    <div class="w-14 h-14 bg-blue-500/20 rounded-xl flex items-center justify-center mb-6 text-blue-400 text-2xl">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                    </div>
-                    <h4 class="text-xl font-bold mb-3 text-white">Easy Excel Uploads</h4>
-                    <p class="text-gray-400 leading-relaxed">Teachers simply upload an Excel or CSV file. The portal automatically parses and routes the grades to the right student accounts instantly.</p>
-                </div>
-                <!-- Feature 2 -->
-                <div class="glass-card p-8 rounded-2xl">
-                    <div class="w-14 h-14 bg-purple-500/20 rounded-xl flex items-center justify-center mb-6 text-purple-400 text-2xl">
-                        <i class="fas fa-mobile-alt"></i>
-                    </div>
-                    <h4 class="text-xl font-bold mb-3 text-white">Mobile Optimized</h4>
-                    <p class="text-gray-400 leading-relaxed">Students and parents can check results smoothly on any device. The portal adapts beautifully to smartphones and tablets.</p>
-                </div>
-                <!-- Feature 3 -->
-                <div class="glass-card p-8 rounded-2xl">
-                    <div class="w-14 h-14 bg-green-500/20 rounded-xl flex items-center justify-center mb-6 text-green-400 text-2xl">
-                        <i class="fas fa-lock"></i>
-                    </div>
-                    <h4 class="text-xl font-bold mb-3 text-white">Private & Secure</h4>
-                    <p class="text-gray-400 leading-relaxed">Each student gets a secure, unique PIN/Password login. Results are encrypted and isolated so privacy is completely guaranteed.</p>
-                </div>
-                <!-- Feature 4 -->
-                <div class="glass-card p-8 rounded-2xl">
-                    <div class="w-14 h-14 bg-yellow-500/20 rounded-xl flex items-center justify-center mb-6 text-yellow-400 text-2xl">
-                        <i class="fas fa-paint-brush"></i>
-                    </div>
-                    <h4 class="text-xl font-bold mb-3 text-white">Custom Branding</h4>
-                    <p class="text-gray-400 leading-relaxed">The portal features your school's logo, colors, and crest. It feels exactly like an extension of your own school's website.</p>
-                </div>
-                <!-- Feature 5 -->
-                <div class="glass-card p-8 rounded-2xl">
-                    <div class="w-14 h-14 bg-pink-500/20 rounded-xl flex items-center justify-center mb-6 text-pink-400 text-2xl">
-                        <i class="fas fa-chart-pie"></i>
-                    </div>
-                    <h4 class="text-xl font-bold mb-3 text-white">Analytics Dashboard</h4>
-                    <p class="text-gray-400 leading-relaxed">Administrators can view class performance trends, pass rates, and login statistics from a beautiful central dashboard.</p>
-                </div>
-                <!-- Feature 6 -->
-                <div class="glass-card p-8 rounded-2xl">
-                    <div class="w-14 h-14 bg-teal-500/20 rounded-xl flex items-center justify-center mb-6 text-teal-400 text-2xl">
-                        <i class="fas fa-headset"></i>
-                    </div>
-                    <h4 class="text-xl font-bold mb-3 text-white">Direct Support</h4>
-                    <p class="text-gray-400 leading-relaxed">You deal directly with the founder. No frustrating support queues. I provide fast, personal onboarding and troubleshooting.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Blog / Updates Section -->
-    <section id="blog" class="py-20 relative z-10">
-        <div class="absolute inset-0 bg-gradient-to-b from-brand-dark to-[#0b1120] z-0"></div>
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div class="flex flex-col md:flex-row justify-between items-end mb-12">
-                <div>
-                    <h2 class="text-brand-light font-semibold tracking-wide uppercase text-sm mb-2">GradeFlow Blog</h2>
-                    <h3 class="font-heading text-3xl md:text-5xl font-bold">Latest Insights & Updates</h3>
-                </div>
-                <a href="#" class="text-brand-light hover:text-white transition-colors mt-4 md:mt-0 font-medium">View all posts <i class="fas fa-arrow-right ml-1"></i></a>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <!-- Blog Post 1 -->
-                <div class="glass-card rounded-2xl overflow-hidden group">
-                    <div class="h-48 bg-gray-800 relative overflow-hidden">
-                        <div class="absolute inset-0 bg-gradient-to-tr from-blue-600/40 to-purple-600/40 group-hover:scale-110 transition-transform duration-500"></div>
-                        <div class="absolute inset-0 flex items-center justify-center">
-                            <i class="fas fa-laptop-code text-5xl text-white/50"></i>
+        <div id="landing-view">
+            <!-- Navigation -->
+            <nav class="fixed w-full z-50 glass transition-all duration-300" id="navbar">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex items-center justify-between h-20">
+                        <div class="flex items-center gap-2">
+                            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-light to-brand-accent flex items-center justify-center shadow-lg shadow-brand-primary/30 p-1.5">
+                                <svg viewBox="0 0 100 100" class="w-full h-full fill-white">
+                                    <rect x="15" y="55" width="12" height="30" rx="1"/><rect x="35" y="40" width="12" height="45" rx="1"/><rect x="55" y="30" width="12" height="55" rx="1"/><rect x="75" y="20" width="12" height="65" rx="1"/>
+                                    <path d="M5,75 L25,60 L45,75 L80,40 L70,35 L95,25 L90,50 L80,45 L45,80 L25,65 L5,80 Z" stroke="#1e293b" stroke-width="4" fill="white" />
+                                </svg>
+                            </div>
+                            <span onclick="openOwnerLogin()" class="font-heading font-bold text-2xl tracking-tight text-white cursor-pointer select-none">Grade<span class="text-brand-light">Flow</span></span>
                         </div>
-                    </div>
-                    <div class="p-6">
-                        <div class="text-xs text-brand-light font-bold mb-2 uppercase">Product Update</div>
-                        <h4 class="text-xl font-bold mb-2 text-white group-hover:text-brand-light transition-colors">Introducing GradeFlow Analytics 2.0</h4>
-                        <p class="text-gray-400 text-sm mb-4">We've completely revamped the admin dashboard to give principals a clearer bird's-eye view of student performance over the semester.</p>
-                        <div class="flex items-center text-sm text-gray-500">
-                            <i class="far fa-calendar mr-2"></i> April 12, 2026
+                        <div class="hidden md:flex gap-4">
+                            <button onclick="openLoginModal()" class="bg-gray-800 hover:bg-gray-700 text-white px-5 py-2 rounded-full text-sm font-medium transition-all border border-gray-600 flex items-center">
+                                <i class="fas fa-user-shield mr-2"></i> Staff Portal Login
+                            </button>
+                            <button onclick="openPortalSim()" class="bg-brand-primary hover:bg-blue-500 text-white px-6 py-2 rounded-full text-sm font-medium transition-all shadow-lg shadow-brand-primary/30 transform hover:scale-105 flex items-center">
+                                <i class="fas fa-external-link-alt mr-2"></i> Open Student Portal
+                            </button>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Blog Post 2 -->
-                <div class="glass-card rounded-2xl overflow-hidden group">
-                    <div class="h-48 bg-gray-800 relative overflow-hidden">
-                        <div class="absolute inset-0 bg-gradient-to-tr from-teal-600/40 to-green-600/40 group-hover:scale-110 transition-transform duration-500"></div>
-                        <div class="absolute inset-0 flex items-center justify-center">
-                            <i class="fas fa-shield-alt text-5xl text-white/50"></i>
-                        </div>
-                    </div>
-                    <div class="p-6">
-                        <div class="text-xs text-brand-light font-bold mb-2 uppercase">Education Tips</div>
-                        <h4 class="text-xl font-bold mb-2 text-white group-hover:text-brand-light transition-colors">Why Paper Results are a Security Risk</h4>
-                        <p class="text-gray-400 text-sm mb-4">A deep dive into the privacy issues surrounding traditional paper report cards and why moving to encrypted digital portals is essential.</p>
-                        <div class="flex items-center text-sm text-gray-500">
-                            <i class="far fa-calendar mr-2"></i> March 28, 2026
-                        </div>
-                    </div>
-                </div>
+            </nav>
 
-                <!-- Blog Post 3 -->
-                <div class="glass-card rounded-2xl overflow-hidden group">
-                    <div class="h-48 bg-gray-800 relative overflow-hidden">
-                        <div class="absolute inset-0 bg-gradient-to-tr from-orange-600/40 to-red-600/40 group-hover:scale-110 transition-transform duration-500"></div>
-                        <div class="absolute inset-0 flex items-center justify-center">
-                            <i class="fas fa-users text-5xl text-white/50"></i>
-                        </div>
+            <!-- Hero Section -->
+            <div id="home" class="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+                <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center pointer-events-none">
+                    <div class="glass-card inline-block px-4 py-1.5 rounded-full mb-6 border border-brand-light/30 text-sm font-medium text-brand-light pointer-events-auto">
+                        <i class="fas fa-database mr-2"></i> Fully Synced Database Architecture
                     </div>
-                    <div class="p-6">
-                        <div class="text-xs text-brand-light font-bold mb-2 uppercase">Case Study</div>
-                        <h4 class="text-xl font-bold mb-2 text-white group-hover:text-brand-light transition-colors">How Lincoln High Saved 40 Hours a Month</h4>
-                        <p class="text-gray-400 text-sm mb-4">See how integrating GradeFlow allowed Lincoln High School's administrative staff to automate their end-of-term reporting completely.</p>
-                        <div class="flex items-center text-sm text-gray-500">
-                            <i class="far fa-calendar mr-2"></i> March 15, 2026
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Pricing Section -->
-    <section id="pricing" class="py-20 bg-[#0b1120] relative z-10">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-brand-light font-semibold tracking-wide uppercase text-sm mb-2">Simple Pricing</h2>
-                <h3 class="font-heading text-3xl md:text-5xl font-bold">Hosted Portal Subscriptions</h3>
-                <p class="mt-4 text-gray-400 max-w-2xl mx-auto">No hidden fees. Flat rates based on your school's size. Cancel anytime.</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                <!-- Tier 1 -->
-                <div class="glass-card rounded-3xl p-8 border-t-4 border-t-gray-500">
-                    <h4 class="text-2xl font-bold text-white mb-2">Primary School</h4>
-                    <p class="text-gray-400 text-sm mb-6">Perfect for small to medium primary schools.</p>
-                    <div class="mb-6">
-                        <span class="text-4xl font-bold text-white">$49</span><span class="text-gray-400">/mo</span>
-                    </div>
-                    <ul class="space-y-4 mb-8 text-gray-300 text-sm">
-                        <li class="flex items-center"><i class="fas fa-check text-green-400 mr-3"></i> Up to 500 Students</li>
-                        <li class="flex items-center"><i class="fas fa-check text-green-400 mr-3"></i> Standard Portal Branding</li>
-                        <li class="flex items-center"><i class="fas fa-check text-green-400 mr-3"></i> Email Support</li>
-                        <li class="flex items-center"><i class="fas fa-check text-green-400 mr-3"></i> Basic Analytics</li>
-                    </ul>
-                    <button class="w-full glass hover:bg-gray-700 text-white font-semibold py-3 rounded-xl transition-colors">Choose Plan</button>
-                </div>
-
-                <!-- Tier 2 (Highlighted) -->
-                <div class="glass-card rounded-3xl p-8 border-t-4 border-t-brand-primary transform md:-translate-y-4 shadow-2xl shadow-brand-primary/20 relative">
-                    <div class="absolute top-0 right-0 bg-brand-primary text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-2xl uppercase">Most Popular</div>
-                    <h4 class="text-2xl font-bold text-white mb-2">High School</h4>
-                    <p class="text-gray-400 text-sm mb-6">Ideal for large secondary schools with complex needs.</p>
-                    <div class="mb-6">
-                        <span class="text-4xl font-bold text-brand-light">$99</span><span class="text-gray-400">/mo</span>
-                    </div>
-                    <ul class="space-y-4 mb-8 text-gray-300 text-sm">
-                        <li class="flex items-center"><i class="fas fa-check text-brand-light mr-3"></i> Up to 2,000 Students</li>
-                        <li class="flex items-center"><i class="fas fa-check text-brand-light mr-3"></i> Full Custom Domain & Branding</li>
-                        <li class="flex items-center"><i class="fas fa-check text-brand-light mr-3"></i> Priority WhatsApp Support</li>
-                        <li class="flex items-center"><i class="fas fa-check text-brand-light mr-3"></i> Advanced Analytics Dashboard</li>
-                        <li class="flex items-center"><i class="fas fa-check text-brand-light mr-3"></i> SMS Notification Add-on</li>
-                    </ul>
-                    <button class="w-full bg-brand-primary hover:bg-blue-600 text-white font-semibold py-3 rounded-xl transition-colors shadow-lg shadow-brand-primary/30">Choose Plan</button>
-                </div>
-
-                <!-- Tier 3 -->
-                <div class="glass-card rounded-3xl p-8 border-t-4 border-t-brand-accent">
-                    <h4 class="text-2xl font-bold text-white mb-2">District / Group</h4>
-                    <p class="text-gray-400 text-sm mb-6">For school groups managing multiple campuses.</p>
-                    <div class="mb-6">
-                        <span class="text-4xl font-bold text-white">$199</span><span class="text-gray-400">/mo</span>
-                    </div>
-                    <ul class="space-y-4 mb-8 text-gray-300 text-sm">
-                        <li class="flex items-center"><i class="fas fa-check text-brand-accent mr-3"></i> Unlimited Students</li>
-                        <li class="flex items-center"><i class="fas fa-check text-brand-accent mr-3"></i> Multiple Campus Dashboards</li>
-                        <li class="flex items-center"><i class="fas fa-check text-brand-accent mr-3"></i> 24/7 Direct Founder Support</li>
-                        <li class="flex items-center"><i class="fas fa-check text-brand-accent mr-3"></i> Custom Feature Requests</li>
-                    </ul>
-                    <button class="w-full glass hover:bg-gray-700 text-white font-semibold py-3 rounded-xl transition-colors">Contact Sales</button>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="bg-gray-900 border-t border-gray-800 py-12 relative z-10">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-                <div class="col-span-1 md:col-span-2">
-                    <div class="flex items-center gap-2 mb-4">
-                        <div class="w-8 h-8 rounded-md bg-gradient-to-br from-brand-light to-brand-accent flex items-center justify-center text-white font-bold text-sm">
-                            GF
-                        </div>
-                        <span class="font-heading font-bold text-xl tracking-tight text-white">GradeFlow</span>
-                    </div>
-                    <p class="text-gray-400 text-sm max-w-sm mb-6">
-                        GradeFlow is a dedicated one-person enterprise committed to modernizing how schools handle, distribute, and analyze student results securely online.
+                    <h1 class="font-heading text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-tight">
+                        Modernize Your School's <br/>
+                        <span class="text-gradient">Result Management</span>
+                    </h1>
+                    <p class="mt-4 text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto font-light mb-10">
+                        GradeFlow securely manages your academic data while publishing it directly to a separate, customizable Student Portal.
                     </p>
-                    <div class="flex space-x-4">
-                        <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-twitter"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-linkedin"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-github"></i></a>
+                    
+                    <div class="flex flex-col sm:flex-row justify-center gap-4 pointer-events-auto flex-wrap mt-8">
+                        <button onclick="openRegisterModal()" class="bg-brand-primary hover:bg-blue-600 text-white px-8 py-4 rounded-full font-semibold text-lg transition-all transform hover:scale-105 shadow-lg shadow-brand-primary/30">
+                            Register School
+                        </button>
+                        <button onclick="openLoginModal()" class="bg-gray-800 hover:bg-gray-700 text-white border border-gray-600 px-8 py-4 rounded-full font-semibold text-lg transition-all transform hover:scale-105 shadow-lg flex items-center justify-center">
+                            <i class="fas fa-user-shield mr-2"></i> Staff Portal Login
+                        </button>
+                        <button onclick="openPortalSim()" class="bg-white text-brand-dark hover:bg-gray-100 px-8 py-4 rounded-full font-semibold text-lg transition-all transform hover:scale-105 flex items-center justify-center shadow-lg">
+                            Student Portal <i class="fas fa-external-link-alt ml-2"></i>
+                        </button>
                     </div>
                 </div>
-                <div>
-                    <h4 class="text-white font-semibold mb-4">Company</h4>
-                    <ul class="space-y-2 text-sm text-gray-400">
-                        <li><a href="#" class="hover:text-brand-light transition-colors">About Me</a></li>
-                        <li><a href="#blog" class="hover:text-brand-light transition-colors">Blog</a></li>
-                        <li><a href="#features" class="hover:text-brand-light transition-colors">Features</a></li>
-                        <li><a href="#pricing" class="hover:text-brand-light transition-colors">Pricing</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="text-white font-semibold mb-4">Legal & Support</h4>
-                    <ul class="space-y-2 text-sm text-gray-400">
-                        <li><a href="#" class="hover:text-brand-light transition-colors">Privacy Policy</a></li>
-                        <li><a href="#" class="hover:text-brand-light transition-colors">Terms of Service</a></li>
-                        <li><a href="#" class="hover:text-brand-light transition-colors">Contact Support</a></li>
-                        <li><a href="#" class="hover:text-brand-light transition-colors">System Status</a></li>
-                    </ul>
-                </div>
+                <div class="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-brand-dark to-transparent z-0"></div>
             </div>
-            <div class="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
-                <p class="text-gray-500 text-sm">© 2026 GradeFlow. All rights reserved.</p>
-                <p class="text-gray-500 text-sm mt-2 md:mt-0 flex items-center">
-                    Built with <i class="fas fa-heart text-red-500 mx-1"></i> by a solo founder.
-                </p>
+
+            <!-- Features Section -->
+            <section id="features" class="py-20 bg-brand-dark relative z-10">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="text-center mb-16">
+                        <h2 class="text-brand-light font-semibold tracking-wide uppercase text-sm mb-2">Two Connected Platforms</h2>
+                        <h3 class="font-heading text-3xl md:text-5xl font-bold">How GradeFlow Works</h3>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-20">
+                        <div class="glass-card p-10 rounded-3xl border-t-4 border-t-blue-500">
+                            <div class="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-6 text-blue-400 text-2xl"><i class="fas fa-server"></i></div>
+                            <h4 class="text-2xl font-bold mb-3 text-white">1. GradeFlow Database</h4>
+                            <p class="text-gray-400 text-lg">Administrators configure settings and teachers input term marks securely on the GradeFlow backend system.</p>
+                        </div>
+                        <div class="glass-card p-10 rounded-3xl border-t-4 border-t-purple-500">
+                            <div class="w-16 h-16 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-6 text-purple-400 text-2xl"><i class="fas fa-laptop-house"></i></div>
+                            <h4 class="text-2xl font-bold mb-3 text-white">2. Separate Student Portal</h4>
+                            <p class="text-gray-400 text-lg">Students log into a separate, uniquely branded website to view their official transcripts in real-time.</p>
+                        </div>
+                    </div>
+
+                    <div class="text-center mb-16">
+                        <h2 class="text-brand-light font-semibold tracking-wide uppercase text-sm mb-2">Why Choose GradeFlow</h2>
+                        <h3 class="font-heading text-3xl md:text-5xl font-bold">Everything your school needs</h3>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div class="glass-card p-8 rounded-2xl"><div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mb-6 text-blue-400 text-xl"><i class="fas fa-user-shield"></i></div><h4 class="text-xl font-bold mb-3 text-white">Admin Management</h4><p class="text-gray-400">Add, edit, and manage student accounts from a centralized, secure dashboard.</p></div>
+                        <div class="glass-card p-8 rounded-2xl"><div class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mb-6 text-purple-400 text-xl"><i class="fas fa-chalkboard-teacher"></i></div><h4 class="text-xl font-bold mb-3 text-white">Teacher Result Entry</h4><p class="text-gray-400">Teachers can easily input and update subject grades dynamically for their assigned students.</p></div>
+                        <div class="glass-card p-8 rounded-2xl"><div class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center mb-6 text-green-400 text-xl"><i class="fas fa-lock"></i></div><h4 class="text-xl font-bold mb-3 text-white">Bank-Grade Security</h4><p class="text-gray-400">Encrypted portals ensure that sensitive student academic data is protected at all times.</p></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Blog Section -->
+            <section id="blog" class="py-20 relative z-10">
+                <div class="absolute inset-0 bg-gradient-to-b from-brand-dark to-[#0b1120] z-0"></div>
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                    <div class="flex flex-col md:flex-row justify-between items-end mb-12">
+                        <div>
+                            <h2 class="text-brand-light font-semibold tracking-wide uppercase text-sm mb-2">GradeFlow Blog</h2>
+                            <h3 class="font-heading text-3xl md:text-5xl font-bold">Latest Insights & Updates</h3>
+                        </div>
+                        <a href="#" class="text-brand-light hover:text-white transition-colors mt-4 md:mt-0 font-medium">View all posts <i class="fas fa-arrow-right ml-1"></i></a>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div class="glass-card rounded-2xl overflow-hidden group">
+                            <div class="h-48 bg-gray-800 relative overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80" alt="Data Analytics on Laptop" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" onerror="this.src='https://via.placeholder.com/800x400?text=Analytics'">
+                                <div class="absolute inset-0 bg-gradient-to-t from-[#1e293b] via-transparent to-transparent opacity-90"></div>
+                            </div>
+                            <div class="p-6">
+                                <div class="text-xs text-brand-light font-bold mb-2 uppercase">Product Update</div>
+                                <h4 class="text-xl font-bold mb-2 text-white group-hover:text-brand-light transition-colors">Introducing GradeFlow Analytics 2.0</h4>
+                                <p class="text-gray-400 text-sm mb-4">We've completely revamped the admin dashboard to give principals a clearer bird's-eye view of student performance over the semester.</p>
+                                <div class="flex items-center text-sm text-gray-500"><i class="far fa-calendar mr-2"></i> April 12, 2026</div>
+                            </div>
+                        </div>
+                        
+                        <div class="glass-card rounded-2xl overflow-hidden group">
+                            <div class="h-48 bg-gray-800 relative overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=800&q=80" alt="Students Learning Securely" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" onerror="this.src='https://via.placeholder.com/800x400?text=Security'">
+                                <div class="absolute inset-0 bg-gradient-to-t from-[#1e293b] via-transparent to-transparent opacity-90"></div>
+                            </div>
+                            <div class="p-6">
+                                <div class="text-xs text-brand-light font-bold mb-2 uppercase">Education Tips</div>
+                                <h4 class="text-xl font-bold mb-2 text-white group-hover:text-brand-light transition-colors">Why Paper Results are a Security Risk</h4>
+                                <p class="text-gray-400 text-sm mb-4">A deep dive into the privacy issues surrounding traditional paper report cards and why moving to encrypted digital portals is essential.</p>
+                                <div class="flex items-center text-sm text-gray-500"><i class="far fa-calendar mr-2"></i> March 28, 2026</div>
+                            </div>
+                        </div>
+
+                        <div class="glass-card rounded-2xl overflow-hidden group">
+                            <div class="h-48 bg-gray-800 relative overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=800&q=80" alt="Happy Teachers and Students" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" onerror="this.src='https://via.placeholder.com/800x400?text=Case+Study'">
+                                <div class="absolute inset-0 bg-gradient-to-t from-[#1e293b] via-transparent to-transparent opacity-90"></div>
+                            </div>
+                            <div class="p-6">
+                                <div class="text-xs text-brand-light font-bold mb-2 uppercase">Case Study</div>
+                                <h4 class="text-xl font-bold mb-2 text-white group-hover:text-brand-light transition-colors">How Lincoln High Saved 40 Hours a Month</h4>
+                                <p class="text-gray-400 text-sm mb-4">See how integrating GradeFlow allowed Lincoln High School's administrative staff to automate their end-of-term reporting completely.</p>
+                                <div class="flex items-center text-sm text-gray-500"><i class="far fa-calendar mr-2"></i> March 15, 2026</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pricing Section -->
+            <section id="pricing" class="py-20 bg-[#0b1120] relative z-10 border-t border-gray-800">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="text-center mb-16">
+                        <h2 class="text-brand-light font-semibold tracking-wide uppercase text-sm mb-2">Simple Pricing</h2>
+                        <h3 class="font-heading text-3xl md:text-5xl font-bold">Hosted Portal Subscriptions</h3>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                        <div class="glass-card rounded-3xl p-8 border-t-4 border-t-gray-500">
+                            <h4 class="text-2xl font-bold text-white mb-2">Primary School</h4>
+                            <div class="mb-6"><span class="text-4xl font-bold text-white">$49</span><span class="text-gray-400">/mo</span></div>
+                            <ul class="space-y-4 mb-8 text-gray-300 text-sm"><li class="flex items-center"><i class="fas fa-check text-green-400 mr-3"></i> Up to 500 Students</li></ul>
+                            <button onclick="openRegisterModal('Primary School', 49)" class="w-full glass hover:bg-gray-700 text-white font-semibold py-3 rounded-xl transition-colors">Choose Plan</button>
+                        </div>
+                        <div class="glass-card rounded-3xl p-8 border-t-4 border-t-brand-primary transform md:-translate-y-4 shadow-2xl shadow-brand-primary/20 relative">
+                            <div class="absolute top-0 right-0 bg-brand-primary text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-2xl uppercase">Popular</div>
+                            <h4 class="text-2xl font-bold text-white mb-2">High School</h4>
+                            <div class="mb-6"><span class="text-4xl font-bold text-brand-light">$99</span><span class="text-gray-400">/mo</span></div>
+                            <ul class="space-y-4 mb-8 text-gray-300 text-sm"><li class="flex items-center"><i class="fas fa-check text-brand-light mr-3"></i> Up to 2,000 Students</li></ul>
+                            <button onclick="openRegisterModal('High School', 99)" class="w-full bg-brand-primary hover:bg-blue-600 text-white font-semibold py-3 rounded-xl transition-colors">Choose Plan</button>
+                        </div>
+                        <div class="glass-card rounded-3xl p-8 border-t-4 border-t-brand-accent">
+                            <h4 class="text-2xl font-bold text-white mb-2">District / Group</h4>
+                            <div class="mb-6"><span class="text-4xl font-bold text-white">$199</span><span class="text-gray-400">/mo</span></div>
+                            <ul class="space-y-4 mb-8 text-gray-300 text-sm"><li class="flex items-center"><i class="fas fa-check text-brand-accent mr-3"></i> Unlimited Students</li></ul>
+                            <button onclick="openRegisterModal('District / Group', 199)" class="w-full glass hover:bg-gray-700 text-white font-semibold py-3 rounded-xl transition-colors">Choose Plan</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Contact Section -->
+            <section id="contact" class="py-20 relative z-10">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="text-center mb-16">
+                        <h2 class="text-brand-light font-semibold tracking-wide uppercase text-sm mb-2">Get In Touch</h2>
+                        <h3 class="font-heading text-3xl md:text-5xl font-bold">Contact GradeFlow</h3>
+                        <p class="mt-4 text-gray-400 max-w-2xl mx-auto">Have questions, need assistance, or want to discuss a custom setup? Reach out to us directly.</p>
+                    </div>
+                    <div class="max-w-3xl mx-auto">
+                        <div class="glass-card p-10 rounded-3xl text-center flex flex-col items-center justify-center border-t-4 border-t-brand-light">
+                            <div class="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-brand-light/20">
+                                <i class="fas fa-envelope text-4xl text-brand-light"></i>
+                            </div>
+                            <h4 class="text-2xl font-bold text-white mb-2">Email Support</h4>
+                            <p class="text-gray-400 mb-8">We aim to respond to all school inquiries within 24 hours.</p>
+                            <a href="mailto:GradFlow@gmail.com" class="text-3xl md:text-5xl font-bold text-gradient hover:opacity-80 transition-opacity">
+                                GradFlow@gmail.com
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Footer -->
+            <footer class="bg-gray-900 border-t border-gray-800 py-12 relative z-10">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                        <div class="col-span-1 md:col-span-2">
+                            <div class="flex items-center gap-2 mb-4">
+                                <div class="w-8 h-8 rounded-md bg-gradient-to-br from-brand-light to-brand-accent flex items-center justify-center p-1">
+                                    <svg viewBox="0 0 100 100" class="w-full h-full fill-white">
+                                        <rect x="15" y="55" width="12" height="30" rx="1"/><rect x="35" y="40" width="12" height="45" rx="1"/><rect x="55" y="30" width="12" height="55" rx="1"/><rect x="75" y="20" width="12" height="65" rx="1"/>
+                                        <path d="M5,75 L25,60 L45,75 L80,40 L70,35 L95,25 L90,50 L80,45 L45,80 L25,65 L5,80 Z" stroke="#111827" stroke-width="4" fill="white" />
+                                    </svg>
+                                </div>
+                                <span class="font-heading font-bold text-xl tracking-tight text-white">GradeFlow</span>
+                            </div>
+                            <p class="text-gray-400 text-sm max-w-sm mb-6">
+                                GradeFlow is a dedicated one-person enterprise committed to modernizing how schools handle, distribute, and analyze student results securely online.
+                            </p>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-semibold mb-4">Company</h4>
+                            <ul class="space-y-2 text-sm text-gray-400">
+                                <li><a href="#" class="hover:text-brand-light transition-colors">About Me</a></li>
+                                <li><a href="#blog" class="hover:text-brand-light transition-colors">Blog</a></li>
+                                <li><a href="#pricing" class="hover:text-brand-light transition-colors">Pricing</a></li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-semibold mb-4">Legal & Support</h4>
+                            <ul class="space-y-2 text-sm text-gray-400">
+                                <li><a href="#" class="hover:text-brand-light transition-colors">Privacy Policy</a></li>
+                                <li><a href="#" class="hover:text-brand-light transition-colors">Terms of Service</a></li>
+                                <li><a href="mailto:GradFlow@gmail.com" class="hover:text-brand-light transition-colors">Contact Support</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="border-t border-gray-800 pt-8 flex justify-between items-center">
+                        <p class="text-gray-500 text-sm">© 2026 GradeFlow. All rights reserved.</p>
+                    </div>
+                </div>
+            </footer>
+        </div>
+
+        <!-- ================= DASHBOARD VIEW (Multi-Role) ================= -->
+        <div id="dashboard-view" class="hidden min-h-screen relative z-40 bg-brand-dark/80 backdrop-blur-md">
+            <nav class="bg-brand-surface border-b border-gray-800 px-4 py-3 flex justify-between items-center sticky top-0 z-50">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-md bg-gradient-to-br from-brand-light to-brand-accent flex items-center justify-center p-1 shadow-md">
+                        <i class="fas fa-database text-white"></i>
+                    </div>
+                    <span class="font-heading font-bold text-lg text-white" id="dashboard-header-title">GradeFlow System</span>
+                    <span class="bg-gray-800 text-xs text-gray-300 px-2 py-1 rounded uppercase tracking-wider ml-2" id="dashboard-role-badge">Role</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="text-sm text-gray-300 hidden sm:block">User: <span id="dashboard-user-name" class="font-bold text-white">User</span></span>
+                    <button onclick="logoutDashboard()" class="text-red-400 hover:text-red-300 text-sm font-medium flex items-center bg-red-400/10 hover:bg-red-400/20 px-3 py-1.5 rounded-lg transition-colors">
+                        <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                    </button>
+                </div>
+            </nav>
+
+            <div class="flex flex-col md:flex-row max-w-7xl mx-auto mt-6 px-4 pb-12 gap-6">
+                <!-- Sidebar -->
+                <aside class="w-full md:w-64 flex-shrink-0">
+                    <div class="glass-card rounded-2xl p-4 sticky top-24">
+                        <ul class="space-y-2" id="sidebar-menu">
+                            <!-- Injected dynamically based on role -->
+                        </ul>
+                    </div>
+                </aside>
+
+                <!-- Main Content Area -->
+                <main class="flex-1 relative">
+                    
+                    <!-- [1] SUPER ADMIN PANEL -->
+                    <div id="super-admin-panel" class="hidden">
+                        <div class="mb-6 flex justify-between items-end">
+                            <div>
+                                <h2 class="text-2xl font-bold text-white">Platform Owner Dashboard</h2>
+                                <p class="text-gray-400 text-sm">Manage registered schools and activate pending subscriptions.</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-4 mb-6">
+                            <div class="glass-card p-4 rounded-xl border-l-4 border-brand-owner"><p class="text-xs text-gray-400 uppercase">Total Schools</p><h3 class="text-2xl font-bold text-white" id="owner-total-schools">0</h3></div>
+                            <div class="glass-card p-4 rounded-xl border-l-4 border-green-500"><p class="text-xs text-gray-400 uppercase">Active</p><h3 class="text-2xl font-bold text-white" id="owner-active-schools">0</h3></div>
+                            <div class="glass-card p-4 rounded-xl border-l-4 border-yellow-500"><p class="text-xs text-gray-400 uppercase">Pending Payment</p><h3 class="text-2xl font-bold text-white" id="owner-pending-schools">0</h3></div>
+                        </div>
+                        <div class="glass-card rounded-2xl overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-sm text-gray-400">
+                                    <thead class="bg-gray-800/50 text-gray-300 uppercase text-xs">
+                                        <tr><th class="px-6 py-4">Center No.</th><th class="px-6 py-4">School Name</th><th class="px-6 py-4">Plan</th><th class="px-6 py-4">Status</th><th class="px-6 py-4 text-right">Action</th></tr>
+                                    </thead>
+                                    <tbody id="owner-schools-body" class="divide-y divide-gray-800"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- [2] SCHOOL ADMIN PANELS -->
+                    <div id="admin-panel" class="hidden">
+                        <div class="flex justify-between items-end mb-6">
+                            <div><h2 class="text-2xl font-bold text-white">Student Database</h2><p class="text-gray-400 text-sm">Manage student portal access.</p></div>
+                            <button onclick="toggleAddStudentForm()" class="bg-brand-primary hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium shadow-lg"><i class="fas fa-plus mr-1"></i> Add Student</button>
+                        </div>
+                        <div id="add-student-form" class="hidden glass-card p-6 rounded-2xl mb-6 border-l-4 border-l-brand-primary">
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div><label class="block text-xs text-gray-400 mb-1">Candidate No.</label><input type="text" id="new-stu-id" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white"></div>
+                                <div><label class="block text-xs text-gray-400 mb-1">Name</label><input type="text" id="new-stu-name" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white"></div>
+                                <div><label class="block text-xs text-gray-400 mb-1">Level</label><select id="new-stu-level" onchange="updateStreamOptions('new-stu-level', 'new-stu-class')" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white"></select></div>
+                                <div><label class="block text-xs text-gray-400 mb-1">Stream</label><select id="new-stu-class" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white"></select></div>
+                            </div>
+                            <div class="mt-4 flex justify-end gap-2"><button onclick="toggleAddStudentForm()" class="px-4 py-2 text-gray-400">Cancel</button><button onclick="addStudent()" class="bg-green-500 text-white px-4 py-2 rounded-lg">Save</button></div>
+                        </div>
+                        <div class="glass-card rounded-2xl overflow-hidden">
+                            <table class="w-full text-left text-sm text-gray-400"><thead class="bg-gray-800/50 text-gray-300 uppercase text-xs"><tr><th class="px-6 py-4">ID</th><th class="px-6 py-4">Name</th><th class="px-6 py-4">Class</th><th class="px-6 py-4 text-center">Action</th></tr></thead><tbody id="admin-table-body" class="divide-y divide-gray-800"></tbody></table>
+                        </div>
+                    </div>
+
+                    <div id="admin-classes-panel" class="hidden">
+                        <div class="mb-6"><h2 class="text-2xl font-bold text-white">Class Management</h2></div>
+                        <div class="glass-card p-6 rounded-2xl mb-6">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div><label class="block text-xs text-gray-400 mb-1">Level</label><select id="new-class-level" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white"><option value="Form 1">Form 1</option><option value="Form 2">Form 2</option><option value="Form 3">Form 3</option><option value="Form 4">Form 4</option></select></div>
+                                <div><label class="block text-xs text-gray-400 mb-1">Stream</label><input type="text" id="new-class-stream" placeholder="e.g. Sciences" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white"></div>
+                            </div>
+                            <button onclick="addClass()" class="mt-4 bg-brand-primary text-white px-6 py-2 rounded-lg">Add Class</button>
+                        </div>
+                        <div class="glass-card rounded-2xl overflow-hidden">
+                            <table class="w-full text-left text-sm text-gray-400"><thead class="bg-gray-800/50 text-gray-300 uppercase text-xs"><tr><th class="px-6 py-4">Level</th><th class="px-6 py-4">Stream</th><th class="px-6 py-4 text-right">Action</th></tr></thead><tbody id="admin-classes-body" class="divide-y divide-gray-800"></tbody></table>
+                        </div>
+                    </div>
+
+                    <div id="admin-settings-panel" class="hidden">
+                        <div class="mb-6"><h2 class="text-2xl font-bold text-white">Portal Settings</h2></div>
+                        <div class="glass-card p-6 rounded-2xl max-w-2xl space-y-6">
+                            <div><label class="block text-sm text-gray-400 mb-2">Portal Theme Color</label><input type="color" id="settings-theme-color" class="w-12 h-10 rounded cursor-pointer bg-transparent border-0 p-0"></div>
+                            <div>
+                                <div class="flex justify-between mb-2"><label class="text-sm text-gray-400">Grading System</label><button onclick="addGradeRow()" class="text-xs text-brand-light bg-brand-primary/20 px-2 py-1 rounded"><i class="fas fa-plus"></i> Add</button></div>
+                                <div class="bg-gray-900/50 p-4 rounded-lg" id="grade-scale-container"></div>
+                            </div>
+                            <button onclick="saveSettings()" id="save-settings-btn" class="bg-brand-primary text-white px-6 py-2 rounded-lg">Save Settings</button>
+                        </div>
+                    </div>
+
+                    <!-- [3] TEACHER PANEL -->
+                    <div id="teacher-panel" class="hidden">
+                        <div class="mb-6"><h2 class="text-2xl font-bold text-white">Result Entry</h2></div>
+                        <div class="glass-card p-6 rounded-2xl mb-6 border-l-4 border-l-brand-accent">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div><select id="teacher-select-level" onchange="updateStreamOptions('teacher-select-level', 'teacher-select-class')" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white"></select></div>
+                                <div><select id="teacher-select-class" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white"></select></div>
+                            </div>
+                            <button onclick="loadTeacherClass()" class="mt-4 bg-brand-accent text-white px-6 py-2 rounded-lg"><i class="fas fa-search"></i> Query Database</button>
+                        </div>
+                        <div id="teacher-grading-area" class="hidden glass-card rounded-2xl overflow-hidden flex-col">
+                            <div class="p-4 bg-gray-800/50 border-b border-gray-800 flex justify-between"><div id="subject-pills" class="flex flex-wrap gap-2"></div><div class="flex gap-2"><input type="text" id="new-subject-name" placeholder="Subject" class="w-32 bg-gray-900 rounded px-2 text-white"><button onclick="addTeacherSubject()" class="bg-gray-700 px-3 rounded text-white"><i class="fas fa-plus"></i></button></div></div>
+                            <div class="overflow-x-auto"><table class="w-full text-left text-sm text-gray-400"><thead id="teacher-table-head" class="bg-gray-800/50"></thead><tbody id="teacher-table-body" class="divide-y divide-gray-800"></tbody></table></div>
+                            <div class="p-4 flex justify-end"><button onclick="saveAllGrades()" id="save-grades-btn" class="bg-brand-accent text-white px-6 py-2 rounded-lg">Save Results</button></div>
+                        </div>
+                    </div>
+
+                </main>
             </div>
         </div>
-    </footer>
 
-    <!-- Portal Login Modal -->
-    <div id="login-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
-        <!-- Backdrop -->
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-md" onclick="closeLoginModal()"></div>
-        
-        <!-- Modal Content -->
-        <div class="glass-card relative z-10 w-full max-w-md p-8 rounded-3xl border border-brand-light/20 shadow-2xl shadow-brand-primary/20 transform scale-95 transition-transform duration-300" id="login-modal-content">
-            <button onclick="closeLoginModal()" class="absolute top-5 right-5 text-gray-400 hover:text-white transition-colors">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-            
-            <div class="text-center mb-8">
-                <div class="w-12 h-12 mx-auto rounded-xl bg-gradient-to-br from-brand-light to-brand-accent flex items-center justify-center text-white text-xl shadow-lg mb-4">
-                    <i class="fas fa-lock"></i>
+        <!-- ================= MODALS ================= -->
+        <!-- Login Modal -->
+        <div id="login-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
+            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeLoginModal()"></div>
+            <div class="glass-card relative z-10 w-full max-w-md p-8 rounded-3xl transform scale-95 transition-transform duration-300" id="login-modal-content">
+                <button onclick="closeLoginModal()" class="absolute top-5 right-5 text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+                <div class="text-center mb-8"><h3 class="text-2xl font-bold text-white mb-2" id="login-title">Staff Access</h3></div>
+                
+                <p id="login-error" class="hidden text-red-400 text-sm text-center mb-4 bg-red-400/10 py-2 rounded-lg"></p>
+
+                <div id="login-step-1" class="space-y-3">
+                    <button onclick="selectLoginRole('admin')" class="w-full text-left bg-gray-800/50 border border-gray-700 hover:border-brand-light rounded-xl p-4 flex gap-4"><div class="w-10 h-10 rounded bg-blue-500/20 text-blue-400 flex items-center justify-center"><i class="fas fa-user-shield"></i></div><div><h4 class="text-white font-bold">School Admin</h4><p class="text-gray-400 text-xs">Manage students & settings</p></div></button>
+                    <button onclick="selectLoginRole('teacher')" class="w-full text-left bg-gray-800/50 border border-gray-700 hover:border-brand-accent rounded-xl p-4 flex gap-4"><div class="w-10 h-10 rounded bg-purple-500/20 text-purple-400 flex items-center justify-center"><i class="fas fa-chalkboard-teacher"></i></div><div><h4 class="text-white font-bold">Teacher</h4><p class="text-gray-400 text-xs">Input term results</p></div></button>
                 </div>
-                <h3 class="text-2xl font-bold text-white mb-2" id="login-title">Center Access</h3>
-                <p class="text-gray-400 text-sm" id="login-subtitle">Enter your school's center details</p>
-            </div>
 
-            <!-- Error Message Container -->
-            <p id="login-error" class="hidden text-red-400 text-sm text-center mb-4"></p>
-
-            <!-- Step 1: Center Details -->
-            <div id="login-step-1" class="space-y-4">
-                <div>
-                    <label class="block text-gray-400 text-xs uppercase tracking-wider mb-2 font-semibold">Center Name</label>
-                    <input type="text" id="center-name" placeholder="e.g. Lincoln High School" class="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-light focus:ring-1 focus:ring-brand-light transition-colors" />
-                </div>
-                <div>
-                    <label class="block text-gray-400 text-xs uppercase tracking-wider mb-2 font-semibold">Center Number</label>
-                    <input type="text" id="center-number" placeholder="e.g. CTR-8492" class="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-light focus:ring-1 focus:ring-brand-light transition-colors" />
-                </div>
-                <button onclick="goToLoginStep(2)" class="w-full mt-4 bg-brand-primary hover:bg-blue-600 text-white py-3 rounded-xl font-semibold transition-colors shadow-lg shadow-brand-primary/30 flex justify-center items-center">
-                    Continue <i class="fas fa-arrow-right ml-2"></i>
-                </button>
-            </div>
-
-            <!-- Step 2: Role Selection -->
-            <div id="login-step-2" class="hidden space-y-4">
-                <button onclick="selectLoginRole('admin')" class="w-full text-left bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700 hover:border-brand-light rounded-2xl p-4 transition-all group flex items-start gap-4">
-                    <div class="w-10 h-10 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 mt-1">
-                        <i class="fas fa-user-shield text-lg"></i>
+                <div id="login-step-3" class="hidden space-y-4">
+                    <div id="login-center-group">
+                        <label class="block text-gray-400 text-xs uppercase mb-1">School Center Number</label>
+                        <input type="text" id="login-center" placeholder="e.g. CTR-1001" class="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white" />
                     </div>
                     <div>
-                        <h4 class="text-white font-bold text-lg group-hover:text-brand-light transition-colors">Admin Access</h4>
-                        <p class="text-gray-400 text-sm mt-1">Student management, account entry, and editing student profiles.</p>
-                    </div>
-                </button>
-                
-                <button onclick="selectLoginRole('teacher')" class="w-full text-left bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700 hover:border-brand-accent rounded-2xl p-4 transition-all group flex items-start gap-4">
-                    <div class="w-10 h-10 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center shrink-0 mt-1">
-                        <i class="fas fa-chalkboard-teacher text-lg"></i>
+                        <label class="block text-gray-400 text-xs uppercase mb-1">Username / Name</label>
+                        <input type="text" id="login-username" class="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white" />
                     </div>
                     <div>
-                        <h4 class="text-white font-bold text-lg group-hover:text-brand-accent transition-colors">Teacher Access</h4>
-                        <p class="text-gray-400 text-sm mt-1">Entry of academic results and grades for assigned students.</p>
+                        <label class="block text-gray-400 text-xs uppercase mb-1">Password</label>
+                        <input type="password" id="login-password" class="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white" />
                     </div>
-                </button>
-                
-                <button onclick="goToLoginStep(1)" class="w-full text-gray-400 hover:text-white py-2 text-sm font-medium mt-2">
-                    <i class="fas fa-arrow-left mr-1"></i> Back to Center Details
-                </button>
+                    <button onclick="processLogin()" class="w-full mt-4 bg-brand-primary text-white py-3 rounded-xl font-semibold shadow-lg">Login Securely</button>
+                    <button onclick="goToLoginStep(1)" class="w-full text-gray-400 hover:text-white py-2 text-sm mt-2">Back</button>
+                </div>
             </div>
+        </div>
 
-            <!-- Step 3: Credentials -->
-            <div id="login-step-3" class="hidden space-y-4">
-                <div class="bg-gray-900/40 rounded-lg p-3 mb-4 flex items-center justify-center text-sm border border-gray-700/50" id="selected-role-badge">
-                    <!-- Badge content injected via JS -->
-                </div>
-
-                <div>
-                    <label class="block text-gray-400 text-xs uppercase tracking-wider mb-2 font-semibold">Full Name</label>
-                    <input type="text" id="full-name" placeholder="John Doe" class="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-light focus:ring-1 focus:ring-brand-light transition-colors" />
-                </div>
-                <div>
-                    <label class="block text-gray-400 text-xs uppercase tracking-wider mb-2 font-semibold">Password</label>
-                    <input type="password" id="password" placeholder="••••••••" class="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-light focus:ring-1 focus:ring-brand-light transition-colors" />
-                </div>
-                <button onclick="processLogin()" class="w-full mt-4 bg-gradient-to-r from-brand-light to-brand-accent hover:from-blue-400 hover:to-purple-500 text-white py-3 rounded-xl font-semibold transition-colors shadow-lg shadow-brand-accent/30">
-                    Secure Login
-                </button>
-                <button onclick="goToLoginStep(2)" class="w-full text-gray-400 hover:text-white py-2 text-sm font-medium mt-2">
-                    <i class="fas fa-arrow-left mr-1"></i> Change Role
-                </button>
-            </div>
-
-            <!-- Step 4: Success State -->
-            <div id="login-success" class="hidden text-center py-6">
-                <div class="w-20 h-20 mx-auto bg-green-500/20 rounded-full flex items-center justify-center mb-6">
-                    <i class="fas fa-check text-4xl text-green-400"></i>
-                </div>
-                <h3 class="text-2xl font-bold text-white mb-2">Login Successful</h3>
-                <p class="text-gray-400" id="redirect-message">Loading your dashboard...</p>
+        <!-- Registration Modal (With Bank Transfer) -->
+        <div id="register-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
+            <div class="absolute inset-0 bg-black/70 backdrop-blur-md" onclick="closeRegisterModal()"></div>
+            <div class="glass-card relative z-10 w-full max-w-lg p-8 rounded-3xl transform scale-95 transition-transform duration-300 max-h-[90vh] overflow-y-auto" id="register-modal-content">
+                <button onclick="closeRegisterModal()" class="absolute top-5 right-5 text-gray-400"><i class="fas fa-times text-xl"></i></button>
+                <div class="text-center mb-6" id="register-header"><h3 class="text-2xl font-bold text-white mb-1">Register School</h3><p class="text-gray-400 text-sm" id="reg-subtitle">Step 1</p></div>
                 
-                <div class="mt-8 flex justify-center">
-                    <div class="w-6 h-6 border-2 border-brand-light border-t-transparent rounded-full animate-spin"></div>
+                <p id="reg-error" class="hidden text-red-400 text-sm text-center mb-4 bg-red-400/10 py-2 rounded-lg"></p>
+
+                <div id="reg-step-1" class="space-y-4">
+                    <div><label class="block text-gray-400 text-xs uppercase mb-1">School Name</label><input type="text" id="reg-center-name" class="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white"></div>
+                    <div><label class="block text-gray-400 text-xs uppercase mb-1">Requested Center Number</label><input type="text" id="reg-center-number" class="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white"></div>
+                    <button onclick="goToRegStep(2)" class="w-full bg-gray-800 text-white py-3 rounded-xl font-semibold">Next <i class="fas fa-arrow-right"></i></button>
+                </div>
+
+                <div id="reg-step-2" class="hidden space-y-4">
+                    <div><label class="block text-gray-400 text-xs uppercase mb-1">Admin Full Name</label><input type="text" id="reg-admin-name" class="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white"></div>
+                    <div><label class="block text-gray-400 text-xs uppercase mb-1">Admin Password</label><input type="password" id="reg-password" class="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white"></div>
+                    <div class="flex gap-2 mt-4"><button onclick="goToRegStep(1)" class="w-1/3 bg-gray-800 text-white py-3 rounded-xl">Back</button><button onclick="goToRegStep(3)" class="w-2/3 bg-gray-800 text-white py-3 rounded-xl">Next <i class="fas fa-arrow-right"></i></button></div>
+                </div>
+
+                <div id="reg-step-3" class="hidden space-y-4">
+                    <div id="reg-email-input-group">
+                        <label class="block text-gray-400 text-xs uppercase mb-1">Official Email</label>
+                        <input type="email" id="reg-email" class="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white mb-4">
+                        <button onclick="sendVerificationCode()" id="btn-send-code" class="w-full bg-brand-primary text-white py-3 rounded-xl font-semibold">Send Code via EmailJS</button>
+                    </div>
+                    <div id="reg-code-group" class="hidden">
+                        <label class="block text-gray-400 text-xs uppercase mb-1">Verification Code</label>
+                        <input type="text" id="reg-ver-code" class="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white text-center text-2xl tracking-widest mb-4" maxlength="4">
+                        <button onclick="verifyCodeAndProceed()" class="w-full bg-green-500 text-white py-3 rounded-xl font-semibold">Verify</button>
+                    </div>
+                </div>
+
+                <!-- Manual Bank Transfer Step -->
+                <div id="reg-step-5" class="hidden space-y-4">
+                    <div class="bg-gray-900/50 p-4 rounded-xl border border-gray-700 flex justify-between items-center"><div><p class="text-xs text-gray-400 uppercase">Selected Plan</p><p class="font-bold text-white" id="reg-summary-plan">Subscription</p></div><div class="text-xl font-bold text-brand-light" id="reg-summary-price">$0</div></div>
+                    <div class="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 text-sm text-blue-200"><i class="fas fa-info-circle mr-2"></i> To complete registration, arrange a bank transfer to the account below.</div>
+                    <div class="bg-gray-900 border border-gray-700 rounded-xl p-4 space-y-3">
+                        <div class="flex justify-between border-b border-gray-800 pb-2"><span class="text-gray-400 text-xs uppercase">Bank Name</span><span class="text-white text-sm">Standard Chartered</span></div>
+                        <div class="flex justify-between border-b border-gray-800 pb-2"><span class="text-gray-400 text-xs uppercase">Account Name</span><span class="text-white text-sm">GradeFlow Systems</span></div>
+                        <div class="flex justify-between border-b border-gray-800 pb-2"><span class="text-gray-400 text-xs uppercase">Account No.</span><span class="text-brand-light font-mono font-bold text-sm">0100 2233 4455 66</span></div>
+                        <div class="flex justify-between"><span class="text-gray-400 text-xs uppercase">Reference</span><span class="text-white text-sm" id="reg-bank-ref">CTR-XXXX</span></div>
+                    </div>
+                    <button onclick="processRegPayment()" class="w-full bg-brand-primary text-white py-3 rounded-xl font-semibold shadow-lg"><i class="fas fa-check-circle mr-2"></i> I Have Sent Payment</button>
+                </div>
+
+                <div id="reg-step-6" class="hidden text-center py-10"><div class="w-16 h-16 border-4 border-brand-primary border-t-transparent rounded-full animate-spin mx-auto mb-6"></div><h3 class="text-xl font-bold text-white mb-2">Finalizing...</h3></div>
+
+                <div id="reg-step-7" class="hidden text-center py-6">
+                    <div class="w-20 h-20 mx-auto bg-yellow-500/20 rounded-full flex items-center justify-center mb-6"><i class="fas fa-clock text-4xl text-yellow-500"></i></div>
+                    <h3 class="text-2xl font-bold text-white mb-2">Registration Received!</h3>
+                    <p class="text-gray-400 text-sm mb-6">Your portal is currently <strong>Pending Activation</strong>. Once we verify your transfer, it will be activated.</p>
+                    <button onclick="closeRegisterModal()" class="w-full bg-gray-800 text-white py-3 rounded-xl font-semibold shadow-lg">Return Home</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Three.js Library -->
+
+    <!-- =========================================================================================
+         APP 2: STUDENT PORTAL WEBSITE (Simulated Separate App)
+         ========================================================================================= -->
+    <div id="student-portal-app" class="hidden">
+        <div class="min-h-screen bg-slate-50 font-sans text-slate-900">
+            <!-- Login -->
+            <div id="sp-login" class="min-h-screen flex items-center justify-center p-4">
+                <div class="max-w-4xl w-full bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row min-h-[550px]">
+                    <div class="w-full md:w-1/2 p-12 text-white flex flex-col justify-center theme-bg"><i class="fas fa-school text-6xl mb-6"></i><h1 class="text-4xl font-bold mb-4" id="sp-login-school-name">Student Portal</h1><p class="text-white/80">Powered by GradeFlow</p></div>
+                    <div class="w-full md:w-1/2 p-12 flex flex-col justify-center">
+                        <h2 class="text-2xl font-bold text-slate-800 mb-6">Student Login</h2>
+                        <div id="sp-login-error" class="hidden mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg"></div>
+                        <form class="space-y-4">
+                            <input type="text" id="sp-center-number" class="w-full p-3 border border-slate-200 rounded-lg theme-ring" placeholder="Center Number (e.g. CTR-1001)">
+                            <input type="text" id="sp-cand-name" class="w-full p-3 border border-slate-200 rounded-lg theme-ring" placeholder="Student Name">
+                            <input type="text" id="sp-cand-number" class="w-full p-3 border border-slate-200 rounded-lg theme-ring" placeholder="Candidate ID (e.g. STU-001)">
+                            <button type="button" onclick="processStudentLogin()" class="w-full theme-bg text-white py-3 rounded-lg font-bold">Sign In</button>
+                        </form>
+                        <button onclick="closePortalSim()" class="mt-6 text-sm text-slate-400 w-full"><i class="fas fa-arrow-left"></i> Demo: Back to Main Site</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard -->
+            <div id="sp-dashboard" class="hidden h-screen flex flex-col md:flex-row">
+                <aside class="w-full md:w-64 bg-white border-b md:border-r border-slate-200 flex flex-col z-10 shadow-lg p-6">
+                    <div class="flex items-center space-x-3 mb-10 theme-text"><i class="fas fa-school text-2xl"></i><span class="font-bold text-lg text-slate-800" id="sp-dash-center-name">Portal</span></div>
+                    <button onclick="logoutStudentPortal()" class="mt-auto w-full flex justify-center items-center p-2 rounded-lg border text-red-500 text-sm"><i class="fas fa-sign-out-alt mr-2"></i> Logout</button>
+                </aside>
+                <main class="flex-1 p-4 md:p-8 overflow-y-auto bg-slate-50">
+                    <div class="flex justify-end mb-4 max-w-5xl"><button onclick="downloadTranscriptPDF()" class="bg-red-500 text-white px-4 py-2 rounded-lg text-sm shadow-sm"><i class="fas fa-file-pdf mr-2"></i> Download PDF</button></div>
+                    
+                    <div id="transcript-print-area" class="bg-white p-4 md:p-8 rounded-xl shadow-sm border border-slate-100 max-w-5xl">
+                        <header class="border-b border-slate-100 pb-6 mb-6">
+                            <h1 class="text-2xl font-bold theme-text" id="sp-pdf-center-name">Center</h1>
+                            <h2 class="text-xl font-bold text-slate-800">Student Transcript</h2>
+                            <p class="text-slate-500 text-sm" id="sp-dash-cand-details">Details</p>
+                        </header>
+                        <table class="w-full text-left block md:table">
+                            <thead class="hidden md:table-header-group bg-slate-50 text-slate-500 text-sm uppercase"><tr><th class="p-4">Subject</th><th class="p-4">Score</th><th class="p-4">Grade</th></tr></thead>
+                            <tbody class="block md:table-row-group divide-y divide-slate-100" id="sp-results-tbody"></tbody>
+                        </table>
+                        <div class="mt-12 pt-6 border-t border-slate-100 text-center text-slate-400 text-sm"><p>Generated securely via GradeFlow Systems.</p><p id="sp-pdf-date"></p></div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- =========================================================================================
+         JAVASCRIPT LOGIC & MULTI-TENANT CLOUD DB SIMULATION
+         ========================================================================================= -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    
-    <!-- Application Logic -->
     <script>
-        // --- Modal Login Logic ---
-        let currentLoginRole = '';
-        const modal = document.getElementById('login-modal');
-        const modalContent = document.getElementById('login-modal-content');
+        // ----------------------------------------------------
+        // EMAIL JS CONFIGURATION
+        // ----------------------------------------------------
+        emailjs.init("KJAdKSjV6Jp1AJSsq"); 
+        const EMAIL_SERVICE_ID = "service_xxb5plq";
+        const VERIFICATION_TEMPLATE_ID = "template_hxtqol8";
+        const WELCOME_TEMPLATE_ID = "template_n74k3mc";
 
-        function openLoginModal() {
-            modal.classList.remove('hidden');
-            // Slight delay for animation to trigger
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                modalContent.classList.remove('scale-95');
-            }, 10);
-            
-            // Reset fields and start at step 1
-            document.getElementById('center-name').value = '';
-            document.getElementById('center-number').value = '';
-            document.getElementById('full-name').value = '';
-            document.getElementById('password').value = '';
-            document.getElementById('login-error').classList.add('hidden');
-            
-            goToLoginStep(1);
-        }
-
-        function closeLoginModal() {
-            modal.classList.add('opacity-0');
-            modalContent.classList.add('scale-95');
-            
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300); // Wait for transition to finish
-        }
-
-        function goToLoginStep(step) {
-            // Hide all steps
-            document.getElementById('login-step-1').classList.add('hidden');
-            document.getElementById('login-step-2').classList.add('hidden');
-            document.getElementById('login-step-3').classList.add('hidden');
-            document.getElementById('login-success').classList.add('hidden');
-            
-            const title = document.getElementById('login-title');
-            const subtitle = document.getElementById('login-subtitle');
-            const errorMsg = document.getElementById('login-error');
-            errorMsg.classList.add('hidden');
-
-            if (step === 1) {
-                document.getElementById('login-step-1').classList.remove('hidden');
-                title.innerText = "Center Access";
-                subtitle.innerText = "Enter your school's center details";
-            } 
-            else if (step === 2) {
-                // Basic Validation for Step 1
-                const cName = document.getElementById('center-name').value.trim();
-                const cNum = document.getElementById('center-number').value.trim();
-                
-                if (!cName || !cNum) {
-                    errorMsg.innerText = "Please provide both Center Name and Number.";
-                    errorMsg.classList.remove('hidden');
-                    document.getElementById('login-step-1').classList.remove('hidden');
-                    return;
-                }
-
-                document.getElementById('login-step-2').classList.remove('hidden');
-                title.innerText = "Select Role";
-                subtitle.innerText = `Accessing as part of ${cName}`;
-            } 
-            else if (step === 3) {
-                document.getElementById('login-step-3').classList.remove('hidden');
-                
-                // Update UI based on selected role
-                if (currentLoginRole === 'admin') {
-                    title.innerText = "Admin Portal";
-                    subtitle.innerText = "Student Management Access";
-                    document.getElementById('selected-role-badge').innerHTML = '<span class="text-blue-400"><i class="fas fa-user-shield mr-2"></i> Role: Administrator</span>';
-                } else {
-                    title.innerText = "Teacher Portal";
-                    subtitle.innerText = "Result Entry Access";
-                    document.getElementById('selected-role-badge').innerHTML = '<span class="text-purple-400"><i class="fas fa-chalkboard-teacher mr-2"></i> Role: Subject Teacher</span>';
-                }
+        // ----------------------------------------------------
+        // MULTI-TENANT DATABASE SIMULATION
+        // ----------------------------------------------------
+        const DB_KEY = 'gradeflow_prod_db'; // Renamed to force a fresh slate
+        let currentCenterId = null; // Set during login
+        
+        function getMasterDB() {
+            let data = localStorage.getItem(DB_KEY);
+            if (!data) {
+                // Initialize System with an empty slate for production
+                const initialDB = {
+                    schools: {}
+                };
+                localStorage.setItem(DB_KEY, JSON.stringify(initialDB));
+                return initialDB;
             }
+            return JSON.parse(data);
         }
 
-        function selectLoginRole(role) {
-            currentLoginRole = role;
+        function saveMasterDB(db) { localStorage.setItem(DB_KEY, JSON.stringify(db)); }
+        
+        // Gets the specific school context for an active session
+        function getDatabase() { return getMasterDB().schools[currentCenterId]; }
+        function saveDatabase(schoolData) {
+            let mdb = getMasterDB();
+            mdb.schools[currentCenterId] = schoolData;
+            saveMasterDB(mdb);
+        }
+
+        // ----------------------------------------------------
+        // APP 1: ROUTING & MODALS
+        // ----------------------------------------------------
+        let currentRole = '';
+        let currentVerificationCode = "1234";
+
+        function initGradeFlow() { init3D(); }
+
+        // Owner Secret Login
+        function openOwnerLogin() {
+            currentRole = 'owner';
+            document.getElementById('login-modal').classList.remove('hidden'); 
+            setTimeout(() => { 
+                document.getElementById('login-modal').classList.remove('opacity-0'); 
+                document.getElementById('login-modal-content').classList.remove('scale-95'); 
+            }, 10); 
             goToLoginStep(3);
         }
 
-        function processLogin() {
-            const name = document.getElementById('full-name').value.trim();
-            const pass = document.getElementById('password').value;
-            const errorMsg = document.getElementById('login-error');
+        // Login Modal Logic
+        function openLoginModal() { 
+            document.getElementById('login-modal').classList.remove('hidden'); 
+            setTimeout(() => { document.getElementById('login-modal').classList.remove('opacity-0'); document.getElementById('login-modal-content').classList.remove('scale-95'); }, 10); 
+            goToLoginStep(1); 
+        }
+        function closeLoginModal() { 
+            document.getElementById('login-modal').classList.add('opacity-0'); document.getElementById('login-modal-content').classList.add('scale-95'); 
+            setTimeout(() => document.getElementById('login-modal').classList.add('hidden'), 300); 
+        }
 
-            if (!name || !pass) {
-                errorMsg.innerText = "Please enter your Full Name and Password.";
-                errorMsg.classList.remove('hidden');
+        function goToLoginStep(step) {
+            document.getElementById('login-step-1').classList.add('hidden'); 
+            document.getElementById('login-step-3').classList.add('hidden'); 
+            document.getElementById('login-error').classList.add('hidden');
+            
+            if (step === 1) { 
+                document.getElementById('login-step-1').classList.remove('hidden'); 
+                document.getElementById('login-title').innerText = "Staff Access"; 
+            } else if (step === 3) { 
+                document.getElementById('login-step-3').classList.remove('hidden'); 
+                
+                // Super Admin specific logic
+                if (currentRole === 'owner') {
+                    document.getElementById('login-title').innerText = "System Owner Login";
+                    document.getElementById('login-center-group').classList.add('hidden'); // Owner doesn't need center
+                    document.getElementById('login-username').value = "admin";
+                    document.getElementById('login-password').value = "";
+                } else {
+                    document.getElementById('login-title').innerText = currentRole === 'admin' ? "School Admin DB" : "Teacher Database"; 
+                    document.getElementById('login-center-group').classList.remove('hidden');
+                    document.getElementById('login-center').value = "";
+                    document.getElementById('login-username').value = "";
+                    document.getElementById('login-password').value = "";
+                }
+            }
+        }
+        function selectLoginRole(role) { currentRole = role; goToLoginStep(3); }
+
+        function processLogin() {
+            const err = document.getElementById('login-error'); err.classList.add('hidden');
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+            
+            // SUPER ADMIN LOGIN
+            if (currentRole === 'owner') {
+                if (username === 'admin' && password === 'XyZ$987!#GfL0w') {
+                    activateDashboard('owner', null, "System Owner");
+                } else {
+                    err.innerText = "Invalid Master Credentials"; err.classList.remove('hidden');
+                }
                 return;
             }
 
-            // Hide step 3, show success animation
-            document.getElementById('login-step-3').classList.add('hidden');
-            document.getElementById('login-title').classList.add('hidden');
-            document.getElementById('login-subtitle').classList.add('hidden');
-            errorMsg.classList.add('hidden');
-            
-            const successContainer = document.getElementById('login-success');
-            successContainer.classList.remove('hidden');
+            // SCHOOL ADMIN / TEACHER LOGIN
+            const center = document.getElementById('login-center').value.trim().toUpperCase();
+            const mdb = getMasterDB();
+            const school = mdb.schools[center];
 
-            const redirectMsg = document.getElementById('redirect-message');
-            redirectMsg.innerText = `Loading ${currentLoginRole === 'admin' ? 'Student Management' : 'Result Entry'} Dashboard for ${name}...`;
+            if (!school) { err.innerText = "Center Number not found in database."; err.classList.remove('hidden'); return; }
+            if (school.status === 'pending') { err.innerText = "Account Pending. Awaiting payment verification."; err.classList.remove('hidden'); return; }
+            if (currentRole === 'admin' && password !== school.adminPassword) { err.innerText = "Invalid admin password."; err.classList.remove('hidden'); return; }
 
-            // Mock redirect delay
-            setTimeout(() => {
-                closeLoginModal();
-                // Reset UI back to normal after hiding
-                setTimeout(() => {
-                    document.getElementById('login-title').classList.remove('hidden');
-                    document.getElementById('login-subtitle').classList.remove('hidden');
-                }, 300);
-            }, 3000);
+            // Success
+            activateDashboard(currentRole, center, username);
         }
 
-        // --- Mobile Menu Toggle ---
-        const btn = document.getElementById('mobile-menu-btn');
-        const menu = document.getElementById('mobile-menu');
+        function activateDashboard(role, centerId, username) {
+            closeLoginModal();
+            currentCenterId = centerId;
+            document.body.classList.add('dashboard-active');
+            document.getElementById('dashboard-view').classList.remove('hidden');
+            document.getElementById('dashboard-user-name').innerText = username;
+            
+            // Reset views
+            ['super-admin-panel', 'admin-panel', 'admin-classes-panel', 'admin-settings-panel', 'teacher-panel'].forEach(id => document.getElementById(id).classList.add('hidden'));
 
-        btn.addEventListener('click', () => {
-            menu.classList.toggle('hidden');
-        });
+            const badge = document.getElementById('dashboard-role-badge');
+            const headerTitle = document.getElementById('dashboard-header-title');
+            const sidebar = document.getElementById('sidebar-menu');
 
-        // --- Navbar Scroll Effect ---
-        const navbar = document.getElementById('navbar');
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 20) {
-                navbar.classList.add('shadow-lg', 'bg-brand-dark/90');
-                navbar.classList.remove('bg-transparent');
+            if (role === 'owner') {
+                headerTitle.innerText = "GradeFlow Master DB";
+                badge.innerText = "System Owner"; badge.className = 'bg-yellow-500/20 text-yellow-500 px-2 py-1 rounded text-xs font-bold uppercase ml-2';
+                sidebar.innerHTML = `<li><button class="w-full flex items-center text-brand-owner bg-yellow-500/10 px-4 py-3 rounded-xl font-medium"><i class="fas fa-school mr-3"></i> Network Schools</button></li>`;
+                document.getElementById('super-admin-panel').classList.remove('hidden');
+                renderOwnerTable();
             } else {
-                navbar.classList.remove('shadow-lg', 'bg-brand-dark/90');
-                navbar.classList.add('bg-transparent');
-            }
-        });
-
-        // --- Three.js 3D Background Setup ---
-        window.onload = function() {
-            init3D();
-        };
-
-        function init3D() {
-            const canvas = document.getElementById('hero-canvas');
-            
-            // Scene setup
-            const scene = new THREE.Scene();
-            // Fog to fade objects in the distance
-            scene.fog = new THREE.FogExp2(0x0f172a, 0.0015);
-
-            // Camera setup
-            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 30;
-
-            // Renderer setup
-            const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
-
-            // Objects: Create a flowing network of "Data Nodes" (representing grades/data)
-            
-            // 1. Central Abstract Object (TorusKnot)
-            const geometry = new THREE.TorusKnotGeometry(10, 3, 100, 16);
-            
-            // Create a custom material that looks glassy/techy
-            const material = new THREE.MeshBasicMaterial({ 
-                color: 0x38bdf8, 
-                wireframe: true,
-                transparent: true,
-                opacity: 0.15
-            });
-            const torusKnot = new THREE.Mesh(geometry, material);
-            scene.add(torusKnot);
-
-            // 2. Particle "Flow" system
-            const particlesGeometry = new THREE.BufferGeometry();
-            const particlesCount = 1500;
-            
-            const posArray = new Float32Array(particlesCount * 3);
-            const velocities = [];
-
-            for(let i = 0; i < particlesCount * 3; i+=3) {
-                // Spread particles widely
-                posArray[i] = (Math.random() - 0.5) * 100; // x
-                posArray[i+1] = (Math.random() - 0.5) * 100; // y
-                posArray[i+2] = (Math.random() - 0.5) * 100; // z
-                
-                velocities.push({
-                    x: (Math.random() - 0.5) * 0.02,
-                    y: (Math.random() - 0.5) * 0.02,
-                    z: (Math.random() - 0.5) * 0.02
-                });
-            }
-
-            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-            
-            // Make particles look like glowing data dots
-            const particlesMaterial = new THREE.PointsMaterial({
-                size: 0.2,
-                color: 0x8b5cf6,
-                transparent: true,
-                opacity: 0.8,
-                blending: THREE.AdditiveBlending
-            });
-            
-            const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
-            scene.add(particlesMesh);
-
-            // Mouse interaction setup
-            let mouseX = 0;
-            let mouseY = 0;
-            let targetX = 0;
-            let targetY = 0;
-
-            const windowHalfX = window.innerWidth / 2;
-            const windowHalfY = window.innerHeight / 2;
-
-            document.addEventListener('mousemove', (event) => {
-                mouseX = (event.clientX - windowHalfX);
-                mouseY = (event.clientY - windowHalfY);
-            });
-            
-            // Handle touch for mobile
-            document.addEventListener('touchmove', (event) => {
-                if(event.touches.length > 0) {
-                    mouseX = (event.touches[0].clientX - windowHalfX);
-                    mouseY = (event.touches[0].clientY - windowHalfY);
+                const db = getDatabase();
+                headerTitle.innerText = db.settings.centerName;
+                if (role === 'admin') {
+                    badge.innerText = "Admin"; badge.className = 'bg-blue-500/20 text-blue-400 px-2 py-1 rounded text-xs font-bold uppercase ml-2';
+                    sidebar.innerHTML = `
+                        <li><button onclick="switchTab('admin-panel', this)" class="w-full flex items-center text-brand-light bg-blue-500/10 px-4 py-3 rounded-xl font-medium"><i class="fas fa-users mr-3"></i> Students DB</button></li>
+                        <li><button onclick="switchTab('admin-classes-panel', this)" class="w-full flex items-center text-gray-400 hover:text-white px-4 py-3 rounded-xl"><i class="fas fa-chalkboard mr-3"></i> Classes</button></li>
+                        <li><button onclick="switchTab('admin-settings-panel', this)" class="w-full flex items-center text-gray-400 hover:text-white px-4 py-3 rounded-xl"><i class="fas fa-cog mr-3"></i> Settings</button></li>
+                    `;
+                    switchTab('admin-panel', sidebar.children[0].children[0]);
+                    populateLevelDropdowns();
+                } else if (role === 'teacher') {
+                    badge.innerText = "Teacher"; badge.className = 'bg-purple-500/20 text-purple-400 px-2 py-1 rounded text-xs font-bold uppercase ml-2';
+                    sidebar.innerHTML = `<li><button class="w-full flex items-center text-brand-accent bg-purple-500/10 px-4 py-3 rounded-xl font-medium"><i class="fas fa-edit mr-3"></i> Grading DB</button></li>`;
+                    document.getElementById('teacher-panel').classList.remove('hidden');
+                    populateLevelDropdowns();
                 }
-            }, {passive: true});
-
-            // Animation Loop
-            const clock = new THREE.Clock();
-
-            function animate() {
-                requestAnimationFrame(animate);
-                
-                const elapsedTime = clock.getElapsedTime();
-
-                // Smoothly interpolate target values for fluid mouse reaction
-                targetX = mouseX * 0.001;
-                targetY = mouseY * 0.001;
-
-                // Rotate the main shape
-                torusKnot.rotation.y += 0.002;
-                torusKnot.rotation.x += 0.001;
-                
-                // Add subtle floating motion
-                torusKnot.position.y = Math.sin(elapsedTime * 0.5) * 2;
-
-                // Rotate particle mesh based on time and mouse
-                particlesMesh.rotation.y += 0.001;
-                particlesMesh.rotation.x += 0.0005;
-                
-                // Parallax effect with mouse
-                torusKnot.rotation.y += 0.05 * (targetX - torusKnot.rotation.y);
-                torusKnot.rotation.x += 0.05 * (targetY - torusKnot.rotation.x);
-                
-                camera.position.x += (mouseX * 0.01 - camera.position.x) * 0.05;
-                camera.position.y += (-mouseY * 0.01 - camera.position.y) * 0.05;
-                camera.lookAt(scene.position);
-
-                // Animate individual particles for a "flow" effect
-                const positions = particlesMesh.geometry.attributes.position.array;
-                for(let i=0; i<particlesCount; i++) {
-                    const i3 = i*3;
-                    positions[i3+1] += Math.sin(elapsedTime + positions[i3]) * 0.01; // subtle wave on Y axis
-                }
-                particlesMesh.geometry.attributes.position.needsUpdate = true;
-
-                renderer.render(scene, camera);
             }
-
-            // Handle window resize
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            });
-
-            // Start animation
-            animate();
         }
+
+        function switchTab(panelId, btnEl) {
+            ['admin-panel', 'admin-classes-panel', 'admin-settings-panel'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            const links = btnEl.parentElement.parentElement.querySelectorAll('button');
+            links.forEach(l => l.className = 'w-full flex items-center text-gray-400 hover:text-white px-4 py-3 rounded-xl transition-colors');
+            btnEl.className = 'w-full flex items-center text-brand-light bg-blue-500/10 px-4 py-3 rounded-xl font-medium transition-colors';
+            
+            document.getElementById(panelId).classList.remove('hidden');
+            if (panelId === 'admin-panel') renderAdminTable();
+            if (panelId === 'admin-classes-panel') renderClassesTable();
+            if (panelId === 'admin-settings-panel') loadAdminSettingsUI();
+        }
+
+        function logoutDashboard() {
+            document.body.classList.remove('dashboard-active');
+            document.getElementById('dashboard-view').classList.add('hidden');
+            currentCenterId = null;
+        }
+
+        // ==========================================
+        // SUPER ADMIN (OWNER) LOGIC
+        // ==========================================
+        function renderOwnerTable() {
+            const mdb = getMasterDB();
+            const tbody = document.getElementById('owner-schools-body');
+            tbody.innerHTML = '';
+            let activeCount = 0, pendingCount = 0;
+            
+            Object.keys(mdb.schools).forEach(key => {
+                const s = mdb.schools[key];
+                if(s.status === 'active') activeCount++; else pendingCount++;
+                
+                const statusBadge = s.status === 'active' 
+                    ? `<span class="bg-green-500/20 text-green-400 px-2 py-1 rounded text-xs font-bold">ACTIVE</span>`
+                    : `<span class="bg-yellow-500/20 text-yellow-500 px-2 py-1 rounded text-xs font-bold">PENDING</span>`;
+                
+                const actionBtn = s.status === 'pending'
+                    ? `<button onclick="approveSchool('${key}')" class="bg-brand-owner hover:bg-yellow-600 text-white px-3 py-1.5 rounded shadow text-xs font-bold">Approve Payment</button>`
+                    : `<span class="text-gray-500 text-xs">Operational</span>`;
+
+                tbody.innerHTML += `<tr class="hover:bg-gray-800/50"><td class="px-6 py-4 font-mono text-brand-light">${key}</td><td class="px-6 py-4 text-white">${s.settings.centerName}</td><td class="px-6 py-4 text-gray-400">${s.plan}</td><td class="px-6 py-4">${statusBadge}</td><td class="px-6 py-4 text-right">${actionBtn}</td></tr>`;
+            });
+            
+            document.getElementById('owner-total-schools').innerText = Object.keys(mdb.schools).length;
+            document.getElementById('owner-active-schools').innerText = activeCount;
+            document.getElementById('owner-pending-schools').innerText = pendingCount;
+        }
+
+        function approveSchool(centerNo) {
+            if(confirm(`Approve payment and activate portal for ${centerNo}?`)) {
+                let mdb = getMasterDB();
+                mdb.schools[centerNo].status = 'active';
+                saveMasterDB(mdb);
+                renderOwnerTable();
+            }
+        }
+
+        // ==========================================
+        // REGISTRATION FLOW LOGIC
+        // ==========================================
+        let selectedPlan = '', selectedPrice = 0;
+        function openRegisterModal(plan = 'High School', price = 99) { 
+            selectedPlan = plan; selectedPrice = price;
+            document.getElementById('register-modal').classList.remove('hidden'); 
+            setTimeout(() => { document.getElementById('register-modal').classList.remove('opacity-0'); document.getElementById('register-modal-content').classList.remove('scale-95'); }, 10);
+            goToRegStep(1);
+        }
+        function closeRegisterModal() { document.getElementById('register-modal').classList.add('opacity-0'); document.getElementById('register-modal-content').classList.add('scale-95'); setTimeout(() => document.getElementById('register-modal').classList.add('hidden'), 300); }
+        function goToRegStep(step) {
+            for(let i=1; i<=7; i++) { const el = document.getElementById(`reg-step-${i}`); if(el) el.classList.add('hidden'); }
+            document.getElementById('reg-error').classList.add('hidden');
+            if(step === 5) {
+                document.getElementById('reg-summary-plan').innerText = selectedPlan;
+                document.getElementById('reg-summary-price').innerText = `$${selectedPrice}/mo`;
+                document.getElementById('reg-bank-ref').innerText = document.getElementById('reg-center-number').value || "CTR-XXXX";
+            }
+            document.getElementById(`reg-step-${step}`).classList.remove('hidden');
+        }
+
+        function sendVerificationCode() {
+            const email = document.getElementById('reg-email').value.trim();
+            if(!email) return;
+            document.getElementById('btn-send-code').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            currentVerificationCode = Math.floor(1000 + Math.random() * 9000).toString();
+            const templateParams = { to_email: email, school_name: document.getElementById('reg-center-name').value, verification_code: currentVerificationCode };
+            
+            emailjs.send(EMAIL_SERVICE_ID, VERIFICATION_TEMPLATE_ID, templateParams).then(() => {
+                document.getElementById('reg-email-input-group').classList.add('hidden'); document.getElementById('reg-code-group').classList.remove('hidden');
+            }).catch(err => {
+                // If EmailJS is not configured perfectly, alert the fallback code so real users aren't trapped
+                alert(`EmailJS Warning: Could not deliver email (${err.text}). System fallback code: ${currentVerificationCode}`);
+                document.getElementById('reg-email-input-group').classList.add('hidden'); document.getElementById('reg-code-group').classList.remove('hidden');
+            });
+        }
+
+        function verifyCodeAndProceed() {
+            if(document.getElementById('reg-ver-code').value.trim() !== currentVerificationCode) { document.getElementById('reg-error').innerText="Invalid code."; document.getElementById('reg-error').classList.remove('hidden'); return; }
+            goToRegStep(5); // Go straight to bank transfer
+        }
+
+        function processRegPayment() {
+            goToRegStep(6);
+            setTimeout(() => {
+                const cName = document.getElementById('reg-center-name').value;
+                const cNum = document.getElementById('reg-center-number').value.toUpperCase();
+                const aName = document.getElementById('reg-admin-name').value;
+                const aPass = document.getElementById('reg-password').value;
+                
+                let mdb = getMasterDB();
+                mdb.schools[cNum] = {
+                    settings: { centerName: cName, centerNumber: cNum, themeColor: "#2563eb", gradeScale: [{min: 50, max: 100, symbol: 'P'}, {min: 0, max: 49, symbol: 'F'}] },
+                    plan: selectedPlan, status: 'pending', adminName: aName, adminPassword: aPass,
+                    classes: [], classSubjects: {}, students: []
+                };
+                saveMasterDB(mdb);
+                
+                const email = document.getElementById('reg-email').value;
+                document.getElementById('success-email').innerText = email;
+                document.getElementById('success-center-number').innerText = cNum;
+                emailjs.send(EMAIL_SERVICE_ID, WELCOME_TEMPLATE_ID, { to_email: email, school_name: cName, center_number: cNum, admin_name: aName }).catch(e=>console.log(e));
+                goToRegStep(7);
+            }, 1500);
+        }
+
+        // ==========================================
+        // SCHOOL ADMIN / TEACHER DB FUNCTIONS
+        // ==========================================
+        // Class Management
+        function renderClassesTable() {
+            const db = getDatabase(); const tbody = document.getElementById('admin-classes-body'); tbody.innerHTML = '';
+            db.classes.forEach((c, i) => tbody.innerHTML += `<tr class="hover:bg-gray-800/50"><td class="px-6 py-4">${c.level}</td><td class="px-6 py-4 text-brand-light">${c.stream}</td><td class="px-6 py-4 text-right"><button onclick="deleteClass(${i})" class="text-red-400"><i class="fas fa-trash"></i></button></td></tr>`);
+        }
+        function addClass() {
+            const level = document.getElementById('new-class-level').value, stream = document.getElementById('new-class-stream').value.trim();
+            if(!level || !stream) return;
+            const db = getDatabase(); db.classes.push({ level, stream }); saveDatabase(db);
+            document.getElementById('new-class-stream').value = ''; renderClassesTable(); populateLevelDropdowns();
+        }
+        function deleteClass(i) { const db=getDatabase(); db.classes.splice(i,1); saveDatabase(db); renderClassesTable(); populateLevelDropdowns(); }
+
+        function populateLevelDropdowns() {
+            const db = getDatabase(); const levels = [...new Set(db.classes.map(c => c.level))];
+            ['new-stu-level', 'teacher-select-level'].forEach(id => {
+                const el = document.getElementById(id); if(!el) return;
+                el.innerHTML = '<option value="" disabled selected>Select Level</option>';
+                levels.forEach(l => el.innerHTML += `<option value="${l}">${l}</option>`);
+                updateStreamOptions(id, id.replace('level', 'class'));
+            });
+        }
+        function updateStreamOptions(lId, sId) {
+            const db = getDatabase(), level = document.getElementById(lId).value, sel = document.getElementById(sId);
+            sel.innerHTML = '<option value="" disabled selected>Select Stream</option>';
+            db.classes.filter(c => c.level === level).forEach(c => sel.innerHTML += `<option value="${c.stream}">${c.stream}</option>`);
+        }
+
+        // Settings
+        function loadAdminSettingsUI() {
+            const db = getDatabase();
+            document.getElementById('settings-theme-color').value = db.settings.themeColor;
+            const cont = document.getElementById('grade-scale-container'); cont.innerHTML = '';
+            db.settings.gradeScale.forEach(g => cont.innerHTML += `<div class="flex gap-2 mb-2"><input type="number" class="w-1/4 bg-gray-800 border border-gray-700 rounded px-2 text-white" value="${g.min}"><input type="number" class="w-1/4 bg-gray-800 border border-gray-700 rounded px-2 text-white" value="${g.max}"><input type="text" class="w-2/4 bg-gray-800 border border-gray-700 rounded px-2 text-white" value="${g.symbol}"><button onclick="this.parentElement.remove()" class="text-red-400"><i class="fas fa-times"></i></button></div>`);
+        }
+        function addGradeRow() { document.getElementById('grade-scale-container').innerHTML += `<div class="flex gap-2 mb-2"><input type="number" class="w-1/4 bg-gray-800 rounded px-2 text-white" placeholder="Min"><input type="number" class="w-1/4 bg-gray-800 rounded px-2 text-white" placeholder="Max"><input type="text" class="w-2/4 bg-gray-800 rounded px-2 text-white" placeholder="Grade"><button onclick="this.parentElement.remove()" class="text-red-400"><i class="fas fa-times"></i></button></div>`; }
+        function saveSettings() {
+            const db = getDatabase(); db.settings.themeColor = document.getElementById('settings-theme-color').value;
+            let newScale = [];
+            for(let row of document.getElementById('grade-scale-container').children) {
+                const inputs = row.querySelectorAll('input');
+                if(inputs[0].value) newScale.push({ min: parseInt(inputs[0].value), max: parseInt(inputs[1].value), symbol: inputs[2].value });
+            }
+            db.settings.gradeScale = newScale; saveDatabase(db);
+            const btn = document.getElementById('save-settings-btn'); btn.innerText = "Saved!"; setTimeout(()=>btn.innerText="Save Settings", 1500);
+        }
+
+        // Students & Grades
+        function renderAdminTable() {
+            const db = getDatabase(); const tbody = document.getElementById('admin-table-body'); tbody.innerHTML = '';
+            db.students.forEach((stu, i) => tbody.innerHTML += `<tr class="hover:bg-gray-800/50"><td class="px-6 py-4 font-mono text-brand-light">${stu.id}</td><td class="px-6 py-4 text-white">${stu.name}</td><td class="px-6 py-4">${stu.level}</td><td class="px-6 py-4 text-center"><button onclick="deleteStudent(${i})" class="text-red-400"><i class="fas fa-trash"></i></button></td></tr>`);
+        }
+        function toggleAddStudentForm() { document.getElementById('add-student-form').classList.toggle('hidden'); }
+        function addStudent() {
+            const id = document.getElementById('new-stu-id').value, name = document.getElementById('new-stu-name').value, level = document.getElementById('new-stu-level').value, cls = document.getElementById('new-stu-class').value;
+            if(!id || !name || !level) return;
+            const db = getDatabase(); db.students.push({ id, name, level, class_name: cls, scores: {} }); saveDatabase(db);
+            toggleAddStudentForm(); renderAdminTable();
+        }
+        function deleteStudent(i) { const db=getDatabase(); db.students.splice(i,1); saveDatabase(db); renderAdminTable(); }
+
+        let tLevel='', tClass='';
+        function loadTeacherClass() {
+            tLevel = document.getElementById('teacher-select-level').value; tClass = document.getElementById('teacher-select-class').value;
+            if(!tLevel || !tClass) return;
+            const db = getDatabase(), key = `${tLevel}-${tClass}`;
+            if(!db.classSubjects[key]) { db.classSubjects[key] = ['Math']; saveDatabase(db); }
+            document.getElementById('teacher-grading-area').classList.remove('hidden'); renderSubjectManager(); renderTeacherTable();
+        }
+        function renderSubjectManager() {
+            const db = getDatabase(), cont = document.getElementById('subject-pills'); cont.innerHTML = '';
+            (db.classSubjects[`${tLevel}-${tClass}`]||[]).forEach(sub => cont.innerHTML += `<div class="bg-brand-accent/20 text-brand-light px-3 py-1 rounded-full text-xs flex items-center">${sub}<button onclick="removeTeacherSubject('${sub}')" class="ml-2 text-red-400"><i class="fas fa-times"></i></button></div>`);
+        }
+        function addTeacherSubject() {
+            const name = document.getElementById('new-subject-name').value.trim(); if(!name) return;
+            const db = getDatabase(), key = `${tLevel}-${tClass}`;
+            if(!db.classSubjects[key].includes(name)) { db.classSubjects[key].push(name); saveDatabase(db); }
+            renderSubjectManager(); renderTeacherTable();
+        }
+        function removeTeacherSubject(name) { const db=getDatabase(); db.classSubjects[`${tLevel}-${tClass}`] = db.classSubjects[`${tLevel}-${tClass}`].filter(s=>s!==name); saveDatabase(db); renderSubjectManager(); renderTeacherTable(); }
+        function renderTeacherTable() {
+            const db = getDatabase(), tbody = document.getElementById('teacher-table-body'), thead = document.getElementById('teacher-table-head');
+            const subjects = db.classSubjects[`${tLevel}-${tClass}`] || [];
+            let head = `<tr><th class="px-6 py-4">Student</th>`; subjects.forEach(s => head+=`<th class="px-4 py-4 text-center">${s} (%)</th>`); thead.innerHTML = head + `</tr>`;
+            tbody.innerHTML = '';
+            db.students.filter(s=>s.level===tLevel && s.class_name===tClass).forEach(stu => {
+                let row = `<tr><td class="px-6 py-4 text-white">${stu.name}<br><span class="text-xs text-gray-500">${stu.id}</span></td>`;
+                subjects.forEach(sub => row += `<td class="px-4 py-4 text-center"><input type="number" id="score-${stu.id}-${sub}" value="${stu.scores[sub]||''}" class="w-16 bg-gray-900 border border-gray-700 rounded text-center text-white"></td>`);
+                tbody.innerHTML += row + `</tr>`;
+            });
+        }
+        function saveAllGrades() {
+            const db = getDatabase(), subjects = db.classSubjects[`${tLevel}-${tClass}`] || [];
+            db.students.filter(s=>s.level===tLevel && s.class_name===tClass).forEach(stu => {
+                subjects.forEach(sub => { const el=document.getElementById(`score-${stu.id}-${sub}`); if(el) stu.scores[sub] = el.value!==''?parseInt(el.value):null; });
+            });
+            saveDatabase(db); document.getElementById('save-grades-btn').innerText = "Saved!"; setTimeout(()=>document.getElementById('save-grades-btn').innerText="Save Results", 1500);
+        }
+
+        // ==========================================
+        // APP 2: STUDENT PORTAL
+        // ==========================================
+        function openPortalSim() { document.getElementById('gradeflow-app').style.display='none'; document.getElementById('student-portal-app').classList.remove('hidden'); document.title="Student Portal"; }
+        function closePortalSim() { document.getElementById('student-portal-app').classList.add('hidden'); document.getElementById('gradeflow-app').style.display='block'; document.title="GradeFlow | School Systems"; }
+        
+        function applyPortalTheme(color) {
+            document.documentElement.style.setProperty('--theme-color', color);
+            let r=parseInt(color.slice(1,3),16), g=parseInt(color.slice(3,5),16), b=parseInt(color.slice(5,7),16);
+            document.documentElement.style.setProperty('--theme-color-rgb', `${r}, ${g}, ${b}`);
+        }
+
+        function processStudentLogin() {
+            const cNum = document.getElementById('sp-center-number').value.trim().toUpperCase();
+            const candNum = document.getElementById('sp-cand-number').value.trim().toUpperCase();
+            const mdb = getMasterDB(), school = mdb.schools[cNum], errorEl = document.getElementById('sp-login-error');
+            
+            if(!school || school.status !== 'active') { errorEl.innerText = 'Center not found or inactive.'; errorEl.classList.remove('hidden'); return; }
+            const student = school.students.find(s => s.id.toUpperCase() === candNum);
+            if(!student) { errorEl.innerText = 'Invalid Candidate ID.'; errorEl.classList.remove('hidden'); return; }
+
+            errorEl.classList.add('hidden');
+            applyPortalTheme(school.settings.themeColor);
+            
+            document.getElementById('sp-login').classList.add('hidden'); document.getElementById('sp-dashboard').classList.remove('hidden');
+            document.getElementById('sp-dash-center-name').innerText = school.settings.centerName; document.getElementById('sp-pdf-center-name').innerText = school.settings.centerName;
+            
+            const tbody = document.getElementById('sp-results-tbody'); tbody.innerHTML = '';
+            Object.keys(student.scores||{}).forEach(sub => {
+                const score = student.scores[sub];
+                let symbol = 'U';
+                school.settings.gradeScale.forEach(g => { if(score >= g.min && score <= g.max) symbol = g.symbol; });
+                tbody.innerHTML += `<tr class="block md:table-row bg-white border border-slate-100 md:border-none rounded-xl md:rounded-none shadow-sm md:shadow-none overflow-hidden mb-2 md:mb-0"><td class="p-4 flex justify-between md:table-cell border-b border-slate-50 md:border-none"><span class="md:hidden text-xs text-slate-400">Subject</span><span class="font-bold md:font-medium">${sub}</span></td><td class="p-4 flex justify-between md:table-cell border-b border-slate-50 md:border-none"><span class="md:hidden text-xs text-slate-400">Score</span><span class="text-slate-600">${score||'-'}%</span></td><td class="p-4 flex justify-between md:table-cell"><span class="md:hidden text-xs text-slate-400">Grade</span><span class="px-3 py-1 rounded-md text-xs font-bold theme-bg-light theme-text">${symbol}</span></td></tr>`;
+            });
+            document.getElementById('sp-pdf-date').innerText = "Generated on: " + new Date().toLocaleDateString();
+        }
+
+        function downloadTranscriptPDF() {
+            const btn = document.querySelector('button[onclick="downloadTranscriptPDF()"]');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Generating...';
+            html2pdf().set({ margin: 0.5, filename: 'Transcript.pdf', html2canvas: { scale: 2, windowWidth: 1024 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } }).from(document.getElementById('transcript-print-area')).save().then(() => btn.innerHTML = '<i class="fas fa-file-pdf mr-2"></i> Download PDF');
+        }
+        function logoutStudentPortal() { document.getElementById('sp-dashboard').classList.add('hidden'); document.getElementById('sp-login').classList.remove('hidden'); }
+
+        // 3D Background Init
+        function init3D() {
+            const canvas = document.getElementById('hero-canvas'); if(!canvas) return;
+            const scene = new THREE.Scene(); scene.fog = new THREE.FogExp2(0x0f172a, 0.0015);
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); camera.position.z = 30;
+            const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true }); renderer.setSize(window.innerWidth, window.innerHeight);
+            const torusKnot = new THREE.Mesh(new THREE.TorusKnotGeometry(10, 3, 100, 16), new THREE.MeshBasicMaterial({ color: 0x38bdf8, wireframe: true, transparent: true, opacity: 0.15 })); scene.add(torusKnot);
+            const posArray = new Float32Array(3000); for(let i=0; i<3000; i++) posArray[i] = (Math.random() - 0.5) * 100;
+            const particles = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(posArray, 3)), new THREE.PointsMaterial({ size: 0.2, color: 0x8b5cf6, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending })); scene.add(particles);
+            let mouseX = 0, mouseY = 0; document.addEventListener('mousemove', (e) => { mouseX = (e.clientX - window.innerWidth/2); mouseY = (e.clientY - window.innerHeight/2); });
+            function animate() { requestAnimationFrame(animate); torusKnot.rotation.y += 0.002; torusKnot.rotation.x += 0.001; particles.rotation.y += 0.001; camera.position.x += (mouseX * 0.01 - camera.position.x) * 0.05; camera.position.y += (-mouseY * 0.01 - camera.position.y) * 0.05; camera.lookAt(scene.position); renderer.render(scene, camera); }
+            window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); }); animate();
+        }
+        
+        // Boot
+        initGradeFlow();
     </script>
 </body>
 </html>
