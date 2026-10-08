@@ -1,0 +1,46 @@
+name: Deploy GradeFlow payment functions
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["functions/**", "firebase.json", ".github/workflows/deploy-functions.yml"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      PROJECT_ID: shungu-high-portal-50186
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install function dependencies
+        run: npm install --prefix functions
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Authenticate with Google
+        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$RUNNER_TEMP/sa.json"
+
+      - name: Store Finivex keys in Secret Manager
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+          FINIVEX_API_KEY: ${{ secrets.FINIVEX_API_KEY }}
+          FINIVEX_API_SECRET: ${{ secrets.FINIVEX_API_SECRET }}
+        run: |
+          printf '%s' "$FINIVEX_API_KEY"    | firebase functions:secrets:set FINIVEX_API_KEY    --data-file=- --project "$PROJECT_ID" --force
+          printf '%s' "$FINIVEX_API_SECRET" | firebase functions:secrets:set FINIVEX_API_SECRET --data-file=- --project "$PROJECT_ID" --force
+
+      - name: Deploy functions
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+        run: firebase deploy --only functions --project "$PROJECT_ID" --force --non-interactive
+
+      - name: Clean up credentials
+        if: always()
+        run: rm -f "$RUNNER_TEMP/sa.json"
