@@ -13,8 +13,8 @@ const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "https://scorpio-darkweb.gi
 
 // EDIT: your real prices
 const PLANS = {
-  termly: { label: "GradeFlow – 1 term", amount: 50.0, currency: "USD", days: 120 },
-  annual: { label: "GradeFlow – 1 year", amount: 135.0, currency: "USD", days: 365 },
+  termly: { label: "GradeFlow – 1 term", amount: 99.99, currency: "USD", days: 120 },
+  annual: { label: "GradeFlow – 1 year", amount: 299.99, currency: "USD", days: 365 },
 };
 
 // EDIT if GradeFlow links admins to schools differently
