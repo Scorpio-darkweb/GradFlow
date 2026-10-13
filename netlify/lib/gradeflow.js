@@ -17,7 +17,13 @@ const db = admin.firestore();
 
 const FINIVEX_BASE = "https://gateway.finivex.online/api/pg";
 const APP_URL = process.env.APP_URL || "https://scorpio-darkweb.github.io/GradFlow/";
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "https://scorpio-darkweb.github.io";
+// Sites allowed to call this API. Tolerates trailing slashes, paths and spaces in the env value.
+function toOrigin(v) { try { return new URL(String(v).trim()).origin; } catch { return null; } }
+const ALLOWED_ORIGINS = new Set(
+  [...String(process.env.ALLOWED_ORIGIN || "").split(","), "https://scorpio-darkweb.github.io"]
+    .map(toOrigin).filter(Boolean)
+);
+let requestOrigin = "";
 
 // ───── Monthly prices — must match PLAN_PRICES in GradeFlow's index.html ─────
 const PLAN_PRICES = { "Primary School": 49, "High School": 99, "District / Group": 199 };
@@ -49,7 +55,9 @@ function httpError(status, message) {
 
 function cors(extra = {}) {
   return {
-    "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+    "Access-Control-Allow-Origin": ALLOWED_ORIGINS.has(requestOrigin) ? requestOrigin : [...ALLOWED_ORIGINS][0],
+    "Vary": "Origin",
+    "Access-Control-Max-Age": "600",
     "Access-Control-Allow-Headers": "Authorization, Content-Type",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Content-Type": "application/json",
@@ -64,6 +72,7 @@ function json(status, body) {
 // Wraps a handler: handles CORS preflight, errors, and JSON parsing.
 function endpoint(fn) {
   return async (event) => {
+    requestOrigin = toOrigin((event.headers && (event.headers.origin || event.headers.Origin)) || "") || "";
     if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: cors(), body: "" };
     if (event.httpMethod !== "POST") return json(405, { error: "Method not allowed" });
     try {
